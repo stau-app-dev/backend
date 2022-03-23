@@ -1,0 +1,15 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Always perform LF normalization on these files
+*.ts   text
+*.json   text
+*.html   text
+*.md     text
+*.txt    text
+
+# Never perform LF normalization on these files
+*.ico    binary
+*.jar    binary
+*.png    binary
+*.zip    binary

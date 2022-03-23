@@ -1,0 +1,14 @@
+{
+  "git.enableSmartCommit": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "cSpell.words": [
+    "curr",
+    "firestore",
+    "fullscreen",
+    "predeploy",
+    "textfield",
+    "upvote",
+    "upvoted"
+  ]
+}
