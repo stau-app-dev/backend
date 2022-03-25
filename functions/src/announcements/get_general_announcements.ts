@@ -1,27 +1,30 @@
 import { https } from 'firebase-functions'
 import { get } from 'request-promise'
 import { STA_ANNOUNCEMENT_SITE_URL } from '../data/consts'
+import { GeneralAnnouncement } from '../models/announcements'
 
 // NOTE: The site uses script injection, can't use cheerio or similar
-export const getAnnouncements = https.onRequest(async (req, res) => {
+export const getGeneralAnnouncements = https.onRequest(async (req, res) => {
   const startString = 'ancmnt = "'
   const endString = '".split(",");'
   const splitString = '$%-%$'
   try {
-    const data = await get(STA_ANNOUNCEMENT_SITE_URL)
+    const data: string = await get(STA_ANNOUNCEMENT_SITE_URL)
     const rawHTML = data.substring(
       data.indexOf(startString) + startString.length,
       data.indexOf(endString)
     )
     const decoded = decodeURIComponent(rawHTML)
     const announcements = decoded.split(',')
-    const formatted = announcements.map((announcement) => {
-      const [title, content] = announcement.split(splitString)
-      return {
-        title: title.trim(),
-        content: content.trim(),
+    const formatted: GeneralAnnouncement[] = announcements.map(
+      (announcement) => {
+        const [title, content] = announcement.split(splitString)
+        return {
+          title: title.trim(),
+          content: content.trim(),
+        }
       }
-    })
+    )
     res.json({
       data: formatted,
     })
