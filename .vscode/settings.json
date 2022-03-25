@@ -3,6 +3,8 @@
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnSave": true,
   "cSpell.words": [
+    "ancmnt",
+    "consts",
     "curr",
     "firestore",
     "fullscreen",
