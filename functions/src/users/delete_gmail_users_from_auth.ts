@@ -2,16 +2,16 @@ import { https } from 'firebase-functions'
 import { credential, initializeApp } from 'firebase-admin'
 import { ALLOWED_EMAILS } from '../data/consts'
 
-const firebaseApp = initializeApp({
-  credential: credential.applicationDefault(),
-  databaseURL: 'https://staugustinechsapp.firebaseio.com',
-})
-
 // const db = firestore(firebaseApp)
 // const users = await db.collection('users').get()
 
 export const deleteNonValidEmailDomains = https.onRequest(async (req, res) => {
   try {
+    const firebaseApp = initializeApp({
+      credential: credential.applicationDefault(),
+      databaseURL: 'https://staugustinechsapp.firebaseio.com',
+    })
+
     const auth = firebaseApp.auth()
     const users = await auth.listUsers()
 
