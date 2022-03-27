@@ -3,7 +3,7 @@ import * as admin from 'firebase-admin'
 import { FIREBASE_URL, GENERIC_ERROR_MESSAGE } from '../data/consts'
 import { SpiritMeters } from '../models/home'
 
-export const getSpritMeters = https.onRequest(async (req, res) => {
+export const getSpiritMeters = https.onRequest(async (req, res) => {
   try {
     const firebaseApp = admin.initializeApp({
       credential: admin.credential.applicationDefault(),
