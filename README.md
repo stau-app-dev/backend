@@ -15,7 +15,12 @@ To fix linting issues automatically:
 
 ## To Serve
 
-To serve the code on localhost, run: `npm run serve`
+To serve the code on localhost, run:
+
+- `npm run build`
+- `npm run serve`
+
+Note that serve should automatically run build, but it's finicky.
 
 ## To Deploy
 

@@ -1,17 +1,9 @@
-import * as admin from 'firebase-admin'
-import { ALLOWED_EMAILS } from '../data/consts'
+import { ALLOWED_EMAILS, GENERIC_ERROR_MESSAGE } from '../data/consts'
 import { https } from 'firebase-functions'
-
-// const db = firestore(firebaseApp)
-// const users = await db.collection('users').get()
+import { auth } from '../admin'
 
 export const deleteNonValidEmailDomains = https.onRequest(async (req, res) => {
   try {
-    const firebaseApp = admin.initializeApp({
-      credential: admin.credential.applicationDefault(),
-      databaseURL: 'https://staugustinechsapp.firebaseio.com',
-    })
-    const auth = firebaseApp.auth()
     let nextPageToken
     let users = await auth.listUsers(1000, nextPageToken)
     const results = []
@@ -47,7 +39,7 @@ export const deleteNonValidEmailDomains = https.onRequest(async (req, res) => {
     } else {
       res.status(500).json({
         error: {
-          message: 'An error occurred. Please try again later.',
+          message: GENERIC_ERROR_MESSAGE,
         },
       })
     }

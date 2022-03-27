@@ -1,3 +1,3 @@
 export * from './announcements'
-export * from './day_info'
+export * from './home'
 export * from './users'
