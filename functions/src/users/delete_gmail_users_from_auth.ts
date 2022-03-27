@@ -1,18 +1,9 @@
-import * as admin from 'firebase-admin'
-import {
-  ALLOWED_EMAILS,
-  FIREBASE_URL,
-  GENERIC_ERROR_MESSAGE,
-} from '../data/consts'
+import { ALLOWED_EMAILS, GENERIC_ERROR_MESSAGE } from '../data/consts'
 import { https } from 'firebase-functions'
+import { auth } from '../admin'
 
 export const deleteNonValidEmailDomains = https.onRequest(async (req, res) => {
   try {
-    const firebaseApp = admin.initializeApp({
-      credential: admin.credential.applicationDefault(),
-      databaseURL: FIREBASE_URL,
-    })
-    const auth = firebaseApp.auth()
     let nextPageToken
     let users = await auth.listUsers(1000, nextPageToken)
     const results = []
