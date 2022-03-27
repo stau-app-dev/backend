@@ -1,6 +1,6 @@
 import { https } from 'firebase-functions'
 import { get } from 'request-promise'
-import { STA_DAY_NUMBER_SITE_URL } from '../data/consts'
+import { GENERIC_ERROR_MESSAGE, STA_DAY_NUMBER_SITE_URL } from '../data/consts'
 
 export const getDayNumber = https.onRequest(async (req, res) => {
   const searchString = 'Day '
@@ -13,7 +13,9 @@ export const getDayNumber = https.onRequest(async (req, res) => {
       )
     )
     res.json({
-      data: dayNumber,
+      data: {
+        dayNumber,
+      },
     })
   } catch (error) {
     if (error instanceof Error) {
@@ -25,7 +27,7 @@ export const getDayNumber = https.onRequest(async (req, res) => {
     } else {
       res.status(500).json({
         error: {
-          message: 'An error occurred. Please try again later.',
+          message: GENERIC_ERROR_MESSAGE,
         },
       })
     }

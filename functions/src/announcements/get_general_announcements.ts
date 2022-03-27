@@ -1,6 +1,9 @@
 import { https } from 'firebase-functions'
 import { get } from 'request-promise'
-import { STA_ANNOUNCEMENT_SITE_URL } from '../data/consts'
+import {
+  GENERIC_ERROR_MESSAGE,
+  STA_ANNOUNCEMENT_SITE_URL,
+} from '../data/consts'
 import { GeneralAnnouncement } from '../models/announcements'
 
 // NOTE: The site uses script injection, can't use cheerio or similar
@@ -38,7 +41,7 @@ export const getGeneralAnnouncements = https.onRequest(async (req, res) => {
     } else {
       res.status(500).json({
         error: {
-          message: 'An error occurred. Please try again later.',
+          message: GENERIC_ERROR_MESSAGE,
         },
       })
     }
