@@ -17,10 +17,10 @@ export const getGeneralAnnouncements = https.onRequest(async (req, res) => {
       data.indexOf(startString) + startString.length,
       data.indexOf(endString)
     )
-    const decoded = decodeURIComponent(rawHTML)
-    const announcements = decoded.split(',')
+    const announcements = rawHTML.split(',')
     const formatted: GeneralAnnouncement[] = announcements.map(
-      (announcement) => {
+      (htmlAnnouncement) => {
+        const announcement = decodeURIComponent(htmlAnnouncement)
         const [title, content] = announcement.split(splitString)
         return {
           title: title.trim(),
