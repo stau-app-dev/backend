@@ -22,6 +22,16 @@ To serve the code on localhost, run:
 
 Note that serve should automatically run build, but it's finicky.
 
+Note, to use the production database, run:
+
+- `npm run serve:prod`
+
+Be extremely careful when doing this! Avoid running any POST functions when doing this.
+
+## Development
+
+Visit `http://localhost:4000/` to view the Emulator UI. Any functions you run will only affect the emulator.
+
 ## To Deploy
 
 To deploy the code, run: `firebase deploy --only functions`

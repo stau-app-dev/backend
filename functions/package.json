@@ -5,7 +5,8 @@
   "scripts": {
     "lint": "eslint --ext .js,.ts .",
     "build": "tsc",
-    "serve": "npm run build -- --watch | firebase emulators:start --only functions",
+    "serve": "npm run build -- --watch | firebase emulators:start",
+    "serve:prod": "npm run build -- --watch | firebase emulators:start --only functions",
     "shell": "npm run build && firebase functions:shell",
     "start": "npm run shell",
     "deploy": "npm run build && firebase deploy --only functions",
