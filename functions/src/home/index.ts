@@ -1,3 +1,3 @@
-export * from './get_day_number'
-export * from './get_spirit_meters'
-export * from './get_verse_of_day'
+export * from './day_number'
+export * from './spirit_meters'
+export * from './verse_of_day'
