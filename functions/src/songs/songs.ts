@@ -37,6 +37,10 @@ export const getSongs = https.onRequest(async (req, res) => {
 export const addSong = https.onRequest(async (req, res) => {
   try {
     let song: Song = req.body
+    if (!song || !song.artist || !song.name || !song.creatorEmail) {
+      throw new Error('Missing required fields')
+    }
+
     song = {
       ...song,
       createdAt: new Date(),
