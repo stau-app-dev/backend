@@ -1,1 +1,1 @@
-export * from './get_general_announcements'
+export * from './general_announcements'
