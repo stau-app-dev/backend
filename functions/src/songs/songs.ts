@@ -36,7 +36,7 @@ export const getSongs = https.onRequest(async (req, res) => {
 
 export const addSong = https.onRequest(async (req, res) => {
   try {
-    const { artist, name, creatorEmail } = req.body
+    const { artist, name, creatorEmail } = JSON.parse(req.body)
     if (!artist || !name || !creatorEmail) {
       throw new Error('Missing required parameters')
     }
@@ -53,7 +53,7 @@ export const addSong = https.onRequest(async (req, res) => {
 
     res.json({
       data: {
-        message: 'success',
+        message: 'Successfully added song!',
         song: song,
       },
     })
