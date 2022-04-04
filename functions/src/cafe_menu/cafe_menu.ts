@@ -1,7 +1,8 @@
 import { https } from 'firebase-functions'
-import { db, storage } from '../admin'
+import { db } from '../admin'
 import { GENERIC_ERROR_MESSAGE } from '../data/consts'
 import { CafeItem } from '../models/cafe_item'
+import { getSignedUrlFromFilePath } from '../storage'
 
 export const getCafeMenuItems = https.onRequest(async (req, res) => {
   try {
@@ -18,7 +19,9 @@ export const getCafeMenuItems = https.onRequest(async (req, res) => {
     }) as CafeItem[]
 
     for (const item of items) {
-      item.pictureUrl = await getCafeMenuItemPictureUrl(item.pictureId)
+      item.pictureUrl = await getSignedUrlFromFilePath(
+        `newCafeMenuItems/${item.pictureId}`
+      )
     }
 
     res.json({
@@ -79,18 +82,6 @@ export const addCafeMenuItem = https.onRequest(async (req, res) => {
     }
   }
 })
-
-const getCafeMenuItemPictureUrl = async (pictureId: string) => {
-  const fileUrl = await storage
-    .bucket()
-    .file(`newCafeMenuItems/${pictureId}`)
-    .getSignedUrl({
-      action: 'read',
-      expires: '03-09-2491',
-    })
-  console.log(fileUrl)
-  return fileUrl[0]
-}
 
 const capitalizeFirstLetter = (string: string) =>
   string.charAt(0).toUpperCase() + string.slice(1)
