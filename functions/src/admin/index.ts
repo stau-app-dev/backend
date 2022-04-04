@@ -8,3 +8,6 @@ export { firestore as db }
 
 const auth = admin.auth()
 export { auth }
+
+const storage = admin.storage()
+export { storage }
