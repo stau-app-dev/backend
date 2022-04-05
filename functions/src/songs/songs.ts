@@ -11,7 +11,9 @@ export const getSongs = https.onRequest(async (req, res) => {
       .get()
 
     const songs: Song[] = songDocs.docs.map((doc) => {
-      return doc.data() as Song
+      var data = doc.data()
+      data.id = doc.id
+      return data as Song
     }) as Song[]
 
     res.json({
@@ -54,6 +56,51 @@ export const addSong = https.onRequest(async (req, res) => {
     res.json({
       data: {
         message: 'Successfully added song!',
+        song: song,
+      },
+    })
+  } catch (error) {
+    if (error instanceof Error) {
+      res.status(500).json({
+        error: {
+          message: error.message,
+        },
+      })
+    } else {
+      res.status(500).json({
+        error: {
+          message: GENERIC_ERROR_MESSAGE,
+        },
+      })
+    }
+  }
+})
+
+export const upvoteSong = https.onRequest(async (req, res) => {
+  try {
+    const { songId } = req.query
+    if (!songId || typeof songId !== 'string') {
+      throw new Error('Missing required parameters')
+    }
+
+    const songDoc = await db.collection('newSongs').doc(songId).get()
+
+    if (!songDoc.exists) {
+      throw new Error('Song does not exist')
+    }
+
+    const song = songDoc.data() as Song
+
+    await db
+      .collection('newSongs')
+      .doc(songId)
+      .update({
+        upvotes: song.upvotes + 1,
+      })
+
+    res.json({
+      data: {
+        message: 'Successfully upvoted song!',
         song: song,
       },
     })
