@@ -6,8 +6,11 @@ import { getSignedUrlFromFilePath } from '../storage'
 
 export const getCafeMenuItems = https.onRequest(async (req, res) => {
   try {
+    const { isTodaysSpecial } = req.query
+    console.log('isTodaysSpecial: ', isTodaysSpecial)
     const itemsDocs = await db
       .collection('newCafeMenu')
+      .where('isTodaysSpecial', '==', isTodaysSpecial === 'true')
       .orderBy('name', 'asc')
       .get()
 
@@ -47,8 +50,8 @@ export const getCafeMenuItems = https.onRequest(async (req, res) => {
 // NOTE: Frontend tell user that it will be auto capitalized?
 export const addCafeMenuItem = https.onRequest(async (req, res) => {
   try {
-    const { name, price, pictureId } = req.body
-    if (!name || !price || !pictureId) {
+    const { name, price, pictureId, todaysSpecial } = req.body
+    if (!name || !price || !pictureId || !todaysSpecial) {
       throw new Error('Missing required parameters')
     }
 
@@ -56,6 +59,7 @@ export const addCafeMenuItem = https.onRequest(async (req, res) => {
       name: capitalizeFirstLetter(name),
       price,
       pictureId,
+      todaysSpecial,
     }
 
     await db.collection('newCafeMenu').add(item)
