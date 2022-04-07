@@ -78,8 +78,13 @@ export const addSong = https.onRequest(async (req, res) => {
 
 export const upvoteSong = https.onRequest(async (req, res) => {
   try {
-    const { songId } = req.query
-    if (!songId || typeof songId !== 'string') {
+    const { songId, upvotes } = req.query
+    if (
+      !songId ||
+      typeof songId !== 'string' ||
+      !upvotes ||
+      typeof upvotes !== 'string'
+    ) {
       throw new Error('Missing required parameters')
     }
 
@@ -95,7 +100,7 @@ export const upvoteSong = https.onRequest(async (req, res) => {
       .collection('newSongs')
       .doc(songId)
       .update({
-        upvotes: song.upvotes + 1,
+        upvotes: song.upvotes + parseInt(upvotes),
       })
 
     res.json({
