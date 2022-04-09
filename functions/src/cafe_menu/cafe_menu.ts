@@ -7,8 +7,6 @@ import { getSignedUrlFromFilePath } from '../storage'
 export const getCafeMenuItems = https.onRequest(async (req, res) => {
   try {
     const { isTodaysSpecial, limit } = req.query
-    console.log('limit: ', limit)
-    console.log('typeof limit: ', typeof limit)
     let itemsDocs
 
     if (limit && Number(limit) > 0) {
@@ -44,7 +42,6 @@ export const getCafeMenuItems = https.onRequest(async (req, res) => {
     })
   } catch (error) {
     if (error instanceof Error) {
-      console.log(error.message)
       res.status(500).json({
         error: {
           message: error.message,
