@@ -6,13 +6,25 @@ import { getSignedUrlFromFilePath } from '../storage'
 
 export const getCafeMenuItems = https.onRequest(async (req, res) => {
   try {
-    const { isTodaysSpecial } = req.query
-    console.log('isTodaysSpecial: ', isTodaysSpecial)
-    const itemsDocs = await db
-      .collection('newCafeMenu')
-      .where('isTodaysSpecial', '==', isTodaysSpecial === 'true')
-      .orderBy('name', 'asc')
-      .get()
+    const { isTodaysSpecial, limit } = req.query
+    console.log('limit: ', limit)
+    console.log('typeof limit: ', typeof limit)
+    let itemsDocs
+
+    if (limit && Number(limit) > 0) {
+      itemsDocs = await db
+        .collection('newCafeMenu')
+        .limit(Number(limit))
+        .where('isTodaysSpecial', '==', isTodaysSpecial === 'true')
+        .orderBy('name', 'asc')
+        .get()
+    } else {
+      itemsDocs = await db
+        .collection('newCafeMenu')
+        .where('isTodaysSpecial', '==', isTodaysSpecial === 'true')
+        .orderBy('name', 'asc')
+        .get()
+    }
 
     const items: CafeItem[] = itemsDocs.docs.map((doc) => {
       return {
@@ -32,6 +44,7 @@ export const getCafeMenuItems = https.onRequest(async (req, res) => {
     })
   } catch (error) {
     if (error instanceof Error) {
+      console.log(error.message)
       res.status(500).json({
         error: {
           message: error.message,
