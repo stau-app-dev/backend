@@ -1,10 +1,9 @@
 export interface User {
-  id: string
   badges: string[]
   courses: string[]
   clubs: string[]
   email: string
-  msgToken: string
+  msgTokens: string[]
   name: string
   notifications: string[]
   picture: number

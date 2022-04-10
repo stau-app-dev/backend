@@ -17,6 +17,8 @@ export const ALLOWED_EMAILS = [
   'cafelady@stachs.com',
   'administration@stachs.com',
 ]
+export const YCDSBK12_EMAIL = '@ycdsbk12.ca'
+export const YCDSB_EMAIL = '@ycdsb.ca'
 
 // FIREBASE
 export const NEW_ANNOUNCEMENTS_COLLECTION = 'newAnnouncements'
