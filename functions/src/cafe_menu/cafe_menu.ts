@@ -1,6 +1,6 @@
 import { https } from 'firebase-functions'
 import { db } from '../admin'
-import { GENERIC_ERROR_MESSAGE } from '../data/consts'
+import { GENERIC_ERROR_MESSAGE, NEW_CAFE_MENU_COLLECTION } from '../data/consts'
 import { CafeItem } from '../models/cafe_item'
 import { getSignedUrlFromFilePath } from '../storage'
 
@@ -11,14 +11,14 @@ export const getCafeMenuItems = https.onRequest(async (req, res) => {
 
     if (limit && Number(limit) > 0) {
       itemsDocs = await db
-        .collection('newCafeMenu')
+        .collection(NEW_CAFE_MENU_COLLECTION)
         .limit(Number(limit))
         .where('isTodaysSpecial', '==', isTodaysSpecial === 'true')
         .orderBy('name', 'asc')
         .get()
     } else {
       itemsDocs = await db
-        .collection('newCafeMenu')
+        .collection(NEW_CAFE_MENU_COLLECTION)
         .where('isTodaysSpecial', '==', isTodaysSpecial === 'true')
         .orderBy('name', 'asc')
         .get()
@@ -72,7 +72,7 @@ export const addCafeMenuItem = https.onRequest(async (req, res) => {
       todaysSpecial,
     }
 
-    await db.collection('newCafeMenu').add(item)
+    await db.collection(NEW_CAFE_MENU_COLLECTION).add(item)
 
     res.json({
       data: {

@@ -1,6 +1,6 @@
 import { https } from 'firebase-functions'
 import { db } from '../admin'
-import { GENERIC_ERROR_MESSAGE } from '../data/consts'
+import { GENERIC_ERROR_MESSAGE, NEW_USERS_COLLECTION } from '../data/consts'
 
 export const checkIfUserExists = https.onRequest(async (req, res) => {
   try {
@@ -17,7 +17,7 @@ export const checkIfUserExists = https.onRequest(async (req, res) => {
       return
     }
 
-    const userDocs = await db.collection('newUsers').doc(userId).get()
+    const userDocs = await db.collection(NEW_USERS_COLLECTION).doc(userId).get()
 
     if (!userDocs.exists) {
       await addUserToDatabase(userId, email, msgToken, name)
@@ -71,7 +71,7 @@ const addUserToDatabase = async (
       showCourses: true,
       status: status,
     }
-    await db.collection('newUsers').doc(userId).set(newUserData)
+    await db.collection(NEW_USERS_COLLECTION).doc(userId).set(newUserData)
   } catch (error) {
     throw error
   }

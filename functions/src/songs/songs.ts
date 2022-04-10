@@ -1,12 +1,12 @@
 import { https } from 'firebase-functions'
 import { db } from '../admin'
-import { GENERIC_ERROR_MESSAGE } from '../data/consts'
+import { GENERIC_ERROR_MESSAGE, NEW_SONGS_COLLECTION } from '../data/consts'
 import { Song } from '../models/songs'
 
 export const getSongs = https.onRequest(async (req, res) => {
   try {
     const songDocs = await db
-      .collection('newSongs')
+      .collection(NEW_SONGS_COLLECTION)
       .orderBy('upvotes', 'desc')
       .get()
 
@@ -51,7 +51,7 @@ export const addSong = https.onRequest(async (req, res) => {
       upvotes: 0,
     }
 
-    await db.collection('newSongs').add(song)
+    await db.collection(NEW_SONGS_COLLECTION).add(song)
 
     res.json({
       data: {
@@ -88,7 +88,7 @@ export const upvoteSong = https.onRequest(async (req, res) => {
       throw new Error('Missing required parameters')
     }
 
-    const songDoc = await db.collection('newSongs').doc(songId).get()
+    const songDoc = await db.collection(NEW_SONGS_COLLECTION).doc(songId).get()
 
     if (!songDoc.exists) {
       throw new Error('Song does not exist')
@@ -97,7 +97,7 @@ export const upvoteSong = https.onRequest(async (req, res) => {
     const song = songDoc.data() as Song
 
     await db
-      .collection('newSongs')
+      .collection(NEW_SONGS_COLLECTION)
       .doc(songId)
       .update({
         upvotes: song.upvotes + parseInt(upvotes),
