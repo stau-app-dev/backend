@@ -1,4 +1,9 @@
-import { ALLOWED_EMAILS, GENERIC_ERROR_MESSAGE } from '../data/consts'
+import {
+  ALLOWED_EMAILS,
+  GENERIC_ERROR_MESSAGE,
+  YCDSBK12_EMAIL,
+  YCDSB_EMAIL,
+} from '../data/consts'
 import { https } from 'firebase-functions'
 import { auth } from '../admin'
 
@@ -12,8 +17,8 @@ export const deleteNonValidEmailDomains = https.onRequest(async (req, res) => {
     for (let i = 0; i < 2; i++) {
       for (const user of users.users) {
         if (
-          !user.email!.endsWith('@ycdsbk12.ca') &&
-          !user.email!.endsWith('@ycdsb.ca') &&
+          !user.email!.endsWith(YCDSBK12_EMAIL) &&
+          !user.email!.endsWith(YCDSB_EMAIL) &&
           !ALLOWED_EMAILS.includes(user.email!)
         ) {
           await auth.deleteUser(user.uid)
