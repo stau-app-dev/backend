@@ -1,9 +1,10 @@
 export interface ClubAnnouncement {
   id: string
-  title: string
+  clubId: string
+  clubName: string
   content: string
   createdAt: Date
-  author: string
+  creatorName: string
 }
 
 export interface GeneralAnnouncement {
