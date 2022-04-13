@@ -49,7 +49,7 @@ export const addSong = https.onRequest(async (req, res) => {
       creatorEmail,
       createdAt: new Date(),
       upvotes: 0,
-    }
+    } as Song
 
     await db.collection(NEW_SONGS_COLLECTION).add(song)
 

@@ -23,6 +23,7 @@ export const YCDSB_EMAIL = '@ycdsb.ca'
 // FIREBASE
 export const NEW_ANNOUNCEMENTS_COLLECTION = 'newAnnouncements'
 export const NEW_CAFE_MENU_COLLECTION = 'newCafeMenu'
+export const NEW_CLUBS_COLLECTION = 'newClubs'
 export const NEW_SONGS_COLLECTION = 'newSongs'
 export const NEW_SPIRIT_METER_COLLECTION = 'newSpiritMeter'
 export const NEW_USERS_COLLECTION = 'newUsers'
