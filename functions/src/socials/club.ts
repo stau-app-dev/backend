@@ -1,7 +1,11 @@
 import { https } from 'firebase-functions'
 import { db } from '../admin'
-import { GENERIC_ERROR_MESSAGE, NEW_CLUBS_COLLECTION } from '../data/consts'
-import { Club } from '../models/social'
+import {
+  GENERIC_ERROR_MESSAGE,
+  NEW_CLUBS_COLLECTION,
+  NEW_CLUBS_QUICK_ACCESS_COLLECTION,
+} from '../data/consts'
+import { Club, ClubQuickAccessItem } from '../models/social'
 
 export const addClub = https.onRequest(async (req, res) => {
   try {
@@ -22,7 +26,15 @@ export const addClub = https.onRequest(async (req, res) => {
       pictureId,
     } as Club
 
-    await db.collection(NEW_CLUBS_COLLECTION).add(club)
+    const clubAddRes = await db.collection(NEW_CLUBS_COLLECTION).add(club)
+
+    await db
+      .collection(NEW_CLUBS_QUICK_ACCESS_COLLECTION)
+      .doc(clubAddRes.id)
+      .create({
+        pictureId,
+        name,
+      } as ClubQuickAccessItem)
 
     res.json({
       data: {

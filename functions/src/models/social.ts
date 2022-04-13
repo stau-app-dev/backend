@@ -1,4 +1,3 @@
-// TODO: Club and also the quick object model
 export interface Club {
   admins: string[]
   description: string
@@ -7,4 +6,9 @@ export interface Club {
   name: string
   pending: string[]
   pictureId: string
+}
+
+export interface ClubQuickAccessItem {
+  pictureId: string
+  name: string
 }
