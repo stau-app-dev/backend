@@ -69,6 +69,57 @@ const addUserToDatabase = async (id: string, email: string, name: string) => {
     } as User
     await db.collection(NEW_USERS_COLLECTION).doc(id).set(newUserData)
   } catch (error) {
-    throw error
+    if (error instanceof Error) {
+      throw error
+    } else {
+      throw new Error(GENERIC_ERROR_MESSAGE)
+    }
   }
 }
+
+export const updateUserField = https.onRequest(async (req, res) => {
+  try {
+    const { id, field, value } = JSON.parse(req.body)
+    if (typeof id != 'string' || typeof field != 'string' || !value) {
+      res.status(400).send({ error: 'Invalid parameters' })
+      return
+    }
+
+    const userDocs = await db.collection(NEW_USERS_COLLECTION).doc(id).get()
+
+    if (!userDocs.exists) {
+      res.status(400).send({ error: 'Invalid parameters' })
+    }
+
+    await db
+      .collection(NEW_USERS_COLLECTION)
+      .doc(id)
+      .update({
+        [field]: value,
+      })
+
+    res.send({
+      data: {
+        user: {
+          id,
+          ...userDocs.data(),
+          [field]: value,
+        },
+      },
+    })
+  } catch (error) {
+    if (error instanceof Error) {
+      res.status(500).json({
+        error: {
+          message: error.message,
+        },
+      })
+    } else {
+      res.status(500).json({
+        error: {
+          message: GENERIC_ERROR_MESSAGE,
+        },
+      })
+    }
+  }
+})
