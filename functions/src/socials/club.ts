@@ -40,7 +40,11 @@ export const addClub = https.onRequest(async (req, res) => {
     res.json({
       data: {
         message: 'Successfully added club!',
-        club: club,
+        club: {
+          id: clubAddRes.id,
+          ...club,
+          pictureUrl: '',
+        },
       },
     })
   } catch (error) {

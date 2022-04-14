@@ -79,12 +79,8 @@ const addUserToDatabase = async (id: string, email: string, name: string) => {
 
 export const updateUserField = https.onRequest(async (req, res) => {
   try {
-    const { id, field, value } = req.body
-    if (
-      typeof id != 'string' ||
-      typeof field != 'string' ||
-      typeof value != 'string'
-    ) {
+    const { id, field, value } = JSON.parse(req.body)
+    if (typeof id != 'string' || typeof field != 'string' || !value) {
       res.status(400).send({ error: 'Invalid parameters' })
       return
     }
@@ -92,7 +88,7 @@ export const updateUserField = https.onRequest(async (req, res) => {
     const userDocs = await db.collection(NEW_USERS_COLLECTION).doc(id).get()
 
     if (!userDocs.exists) {
-      throw new Error('User does not exist')
+      res.status(400).send({ error: 'Invalid parameters' })
     }
 
     await db
