@@ -13,7 +13,8 @@ export const addClub = https.onRequest(async (req, res) => {
       req.body
     )
     if (!description || !email || !joinPreference || !name || !pictureId) {
-      throw new Error('Missing required parameters')
+      res.status(400).send({ error: 'Invalid parameters' })
+      return
     }
 
     const club = {

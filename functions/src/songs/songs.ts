@@ -40,7 +40,8 @@ export const addSong = https.onRequest(async (req, res) => {
   try {
     const { artist, name, creatorEmail } = JSON.parse(req.body)
     if (!artist || !name || !creatorEmail) {
-      throw new Error('Missing required parameters')
+      res.status(400).send({ error: 'Invalid parameters' })
+      return
     }
 
     const song = {
@@ -85,13 +86,15 @@ export const upvoteSong = https.onRequest(async (req, res) => {
       !upvotes ||
       typeof upvotes !== 'string'
     ) {
-      throw new Error('Missing required parameters')
+      res.status(400).send({ error: 'Invalid parameters' })
+      return
     }
 
     const songDoc = await db.collection(NEW_SONGS_COLLECTION).doc(songId).get()
 
     if (!songDoc.exists) {
-      throw new Error('Song does not exist')
+      res.status(400).send({ error: 'Invalid parameters' })
+      return
     }
 
     const song = songDoc.data() as Song

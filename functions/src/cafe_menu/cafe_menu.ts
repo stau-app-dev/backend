@@ -62,7 +62,8 @@ export const addCafeMenuItem = https.onRequest(async (req, res) => {
   try {
     const { name, price, pictureId, todaysSpecial } = req.body
     if (!name || !price || !pictureId || !todaysSpecial) {
-      throw new Error('Missing required parameters')
+      res.status(400).send({ error: 'Invalid parameters' })
+      return
     }
 
     const item = {

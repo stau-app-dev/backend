@@ -69,6 +69,10 @@ const addUserToDatabase = async (id: string, email: string, name: string) => {
     } as User
     await db.collection(NEW_USERS_COLLECTION).doc(id).set(newUserData)
   } catch (error) {
-    throw error
+    if (error instanceof Error) {
+      throw error
+    } else {
+      throw new Error(GENERIC_ERROR_MESSAGE)
+    }
   }
 }
