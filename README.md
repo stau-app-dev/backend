@@ -34,7 +34,14 @@ Visit `http://localhost:4000/` to view the Emulator UI. Any functions you run wi
 
 ## To Deploy
 
-To deploy the code, run: `firebase deploy --only functions`
+To deploy the code, run:
+
+- `npm run deploy`
+
+Or to deploy only N functions:
+
+- `npm run build`
+- `firebase deploy --only functions:func1,functions:func2`
 
 ## Pushing Code
 
