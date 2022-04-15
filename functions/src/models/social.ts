@@ -9,6 +9,7 @@ export interface Club {
 }
 
 export interface ClubQuickAccessItem {
+  id: string
   name: string
   pictureId: string
   pictureUrl: string

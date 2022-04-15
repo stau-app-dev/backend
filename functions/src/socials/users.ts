@@ -30,7 +30,11 @@ export const getUserClubs = https.onRequest(async (req, res) => {
           .collection(NEW_CLUBS_QUICK_ACCESS_COLLECTION)
           .doc(clubId)
           .get()
-        return { ...clubDoc.data(), pictureUrl: '' } as ClubQuickAccessItem
+        return {
+          id: clubId,
+          ...clubDoc.data(),
+          pictureUrl: '',
+        } as ClubQuickAccessItem
       })
     )
 
