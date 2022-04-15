@@ -5,7 +5,44 @@ import {
   NEW_CLUBS_COLLECTION,
   NEW_CLUBS_QUICK_ACCESS_COLLECTION,
 } from '../data/consts'
-import { Club, ClubQuickAccessItem } from '../models/social'
+import { Club } from '../models/social'
+
+export const getClub = https.onRequest(async (req, res) => {
+  try {
+    const { clubId } = req.query
+    if (typeof clubId !== 'string') {
+      res.status(400).send({ error: 'Invalid parameters' })
+      return
+    }
+
+    const clubDoc = await db.collection(NEW_CLUBS_COLLECTION).doc(clubId).get()
+
+    if (!clubDoc.exists) {
+      res.status(404).send({ error: 'Club not found' })
+      return
+    }
+
+    const club = clubDoc.data() as Club
+
+    res.json({
+      data: club,
+    })
+  } catch (error) {
+    if (error instanceof Error) {
+      res.status(500).json({
+        error: {
+          message: error.message,
+        },
+      })
+    } else {
+      res.status(500).json({
+        error: {
+          message: GENERIC_ERROR_MESSAGE,
+        },
+      })
+    }
+  }
+})
 
 export const addClub = https.onRequest(async (req, res) => {
   try {
@@ -35,7 +72,7 @@ export const addClub = https.onRequest(async (req, res) => {
       .create({
         pictureId,
         name,
-      } as ClubQuickAccessItem)
+      })
 
     res.json({
       data: {
