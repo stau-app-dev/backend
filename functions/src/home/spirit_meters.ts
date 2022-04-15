@@ -2,14 +2,14 @@ import { https } from 'firebase-functions'
 import { db } from '../admin'
 import {
   GENERIC_ERROR_MESSAGE,
-  NEW_SPIRIT_METER_COLLECTION,
+  NEW_SPIRIT_METERS_COLLECTION,
 } from '../data/consts'
 import { SpiritMeters } from '../models/home'
 
 export const getSpiritMeters = https.onRequest(async (req, res) => {
   try {
     const spiritMetersDoc = await db
-      .collection(NEW_SPIRIT_METER_COLLECTION)
+      .collection(NEW_SPIRIT_METERS_COLLECTION)
       .doc('spiritMeters')
       .get()
 
