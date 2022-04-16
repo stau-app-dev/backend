@@ -1,5 +1,4 @@
 export interface ClubAnnouncement {
-  id: string
   clubId: string
   clubName: string
   content: string
