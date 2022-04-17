@@ -65,6 +65,62 @@ export const getUserClubs = https.onRequest(async (req, res) => {
   }
 })
 
+export const getUserClubsNotJoined = https.onRequest(async (req, res) => {
+  try {
+    const { userId } = req.query
+    if (typeof userId !== 'string') {
+      res.status(400).send({ error: 'Invalid parameters' })
+      return
+    }
+
+    const userDoc = await db.collection(NEW_USERS_COLLECTION).doc(userId).get()
+
+    if (!userDoc.exists) {
+      res.status(404).send({ error: 'User not found' })
+      return
+    }
+
+    const clubIds = userDoc.get('clubs') as string[]
+    const clubs = await db.collection(NEW_CLUBS_QUICK_ACCESS_COLLECTION).get()
+
+    const clubsNotJoined = clubs.docs.filter(
+      (club) => !clubIds.includes(club.id)
+    )
+    const clubsNotJoinedData = clubsNotJoined.map(
+      (club) =>
+        ({
+          id: club.id,
+          ...club.data(),
+          pictureUrl: '',
+        } as ClubQuickAccessItem)
+    )
+
+    for (const club of clubsNotJoinedData) {
+      club.pictureUrl = await getSignedUrlFromFilePath(
+        `newClubBanners/${club.pictureId}`
+      )
+    }
+
+    res.json({
+      data: clubsNotJoinedData,
+    })
+  } catch (error) {
+    if (error instanceof Error) {
+      res.status(500).json({
+        error: {
+          message: error.message,
+        },
+      })
+    } else {
+      res.status(500).json({
+        error: {
+          message: GENERIC_ERROR_MESSAGE,
+        },
+      })
+    }
+  }
+})
+
 export const addUserToClub = https.onRequest(async (req, res) => {
   try {
     const { userEmail, clubId } = JSON.parse(req.body)
