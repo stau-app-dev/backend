@@ -91,7 +91,7 @@ export const addUserToClub = https.onRequest(async (req, res) => {
     const club = clubDoc.data() as Club
 
     if (club.members.includes(userEmail) || club.admins.includes(userEmail)) {
-      res.status(400).send({ error: 'User already in club' })
+      res.status(400).send({ error: 'User is already a member of this club' })
       return
     }
 
@@ -112,7 +112,7 @@ export const addUserToClub = https.onRequest(async (req, res) => {
 
     res.json({
       data: {
-        message: 'User added to club',
+        message: 'User has been added to the club!',
       },
     })
   } catch (error) {
@@ -161,7 +161,7 @@ export const addUserToPendingClub = https.onRequest(async (req, res) => {
       club.pending.includes(userEmail) ||
       club.admins.includes(userEmail)
     ) {
-      res.status(400).send({ error: 'User already in club' })
+      res.status(400).send({ error: 'User is already a member of this club' })
       return
     }
 
@@ -174,7 +174,7 @@ export const addUserToPendingClub = https.onRequest(async (req, res) => {
 
     res.json({
       data: {
-        message: 'User added to pending',
+        message: 'You have been added to the pending list',
       },
     })
   } catch (error) {
@@ -224,7 +224,7 @@ export const removeUserFromClub = https.onRequest(async (req, res) => {
       !club.admins.includes(userEmail) ||
       !club.pending.includes(userEmail)
     ) {
-      res.status(400).send({ error: 'User not in club' })
+      res.status(400).send({ error: 'User is not a member of this club' })
       return
     }
 
@@ -246,7 +246,7 @@ export const removeUserFromClub = https.onRequest(async (req, res) => {
 
     res.json({
       data: {
-        message: 'User removed from club',
+        message: 'User has been removed from the club',
       },
     })
   } catch (error) {
