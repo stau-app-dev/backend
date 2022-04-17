@@ -1,9 +1,10 @@
 import { https } from 'firebase-functions'
-import { db } from '../admin'
+import { admin, db } from '../admin'
 import {
   GENERIC_ERROR_MESSAGE,
   NEW_CLUBS_COLLECTION,
   NEW_CLUBS_QUICK_ACCESS_COLLECTION,
+  NEW_USERS_COLLECTION,
 } from '../data/consts'
 import { Club } from '../models/social'
 
@@ -54,6 +55,16 @@ export const addClub = https.onRequest(async (req, res) => {
       return
     }
 
+    const userDoc = await db
+      .collection(NEW_USERS_COLLECTION)
+      .where('email', '==', email)
+      .get()
+    if (userDoc.empty) {
+      res.status(404).send({ error: 'User not found' })
+      return
+    }
+    const userId = userDoc.docs[0].id
+
     const club = {
       admins: [email],
       description,
@@ -74,14 +85,16 @@ export const addClub = https.onRequest(async (req, res) => {
         name,
       })
 
+    await db
+      .collection(NEW_USERS_COLLECTION)
+      .doc(userId)
+      .update({
+        clubs: admin.firestore.FieldValue.arrayUnion(clubAddRes.id),
+      })
+
     res.json({
       data: {
         message: 'Successfully added club!',
-        club: {
-          id: clubAddRes.id,
-          ...club,
-          pictureUrl: '',
-        },
       },
     })
   } catch (error) {
