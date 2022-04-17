@@ -89,13 +89,12 @@ export const addUserToClub = https.onRequest(async (req, res) => {
 
     const club = clubDoc.data() as Club
 
-    if (club.members.includes(userId)) {
+    if (
+      club.members.includes(userId) ||
+      club.pending.includes(userId) ||
+      club.admins.includes(userId)
+    ) {
       res.status(400).send({ error: 'User already in club' })
-      return
-    }
-
-    if (club.admins.includes(userId)) {
-      res.status(400).send({ error: 'User already admin in club' })
       return
     }
 
@@ -109,12 +108,6 @@ export const addUserToClub = https.onRequest(async (req, res) => {
       .doc(clubId)
       .update({
         members: admin.firestore.FieldValue.arrayUnion(userId),
-      })
-
-    await db
-      .collection(NEW_CLUBS_COLLECTION)
-      .doc(clubId)
-      .update({
         pending: admin.firestore.FieldValue.arrayRemove(userId),
       })
 
@@ -239,7 +232,11 @@ export const removeUserFromClub = https.onRequest(async (req, res) => {
 
     const club = clubDoc.data() as Club
 
-    if (!club.members.includes(userId)) {
+    if (
+      !club.members.includes(userId) &&
+      !club.admins.includes(userId) &&
+      !club.pending.includes(userId)
+    ) {
       res.status(400).send({ error: 'User not in club' })
       return
     }
@@ -249,12 +246,7 @@ export const removeUserFromClub = https.onRequest(async (req, res) => {
       .doc(clubId)
       .update({
         members: admin.firestore.FieldValue.arrayRemove(userId),
-      })
-
-    await db
-      .collection(NEW_CLUBS_COLLECTION)
-      .doc(clubId)
-      .update({
+        admins: admin.firestore.FieldValue.arrayRemove(userId),
         pending: admin.firestore.FieldValue.arrayRemove(userId),
       })
 
