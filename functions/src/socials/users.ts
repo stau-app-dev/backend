@@ -67,7 +67,7 @@ export const getUserClubs = https.onRequest(async (req, res) => {
 
 export const addUserToClub = https.onRequest(async (req, res) => {
   try {
-    const { userId, clubId } = req.query
+    const { userId, clubId } = JSON.parse(req.body)
     if (typeof userId !== 'string' || typeof clubId !== 'string') {
       res.status(400).send({ error: 'Invalid parameters' })
       return
@@ -142,7 +142,7 @@ export const addUserToClub = https.onRequest(async (req, res) => {
 
 export const addUserToPendingClub = https.onRequest(async (req, res) => {
   try {
-    const { userId, clubId } = req.query
+    const { userId, clubId } = JSON.parse(req.body)
     if (typeof userId !== 'string' || typeof clubId !== 'string') {
       res.status(400).send({ error: 'Invalid parameters' })
       return
@@ -210,7 +210,7 @@ export const addUserToPendingClub = https.onRequest(async (req, res) => {
 
 export const removeUserFromClub = https.onRequest(async (req, res) => {
   try {
-    const { userId, clubId } = req.query
+    const { userId, clubId } = JSON.parse(req.body)
     if (typeof userId !== 'string' || typeof clubId !== 'string') {
       res.status(400).send({ error: 'Invalid parameters' })
       return
