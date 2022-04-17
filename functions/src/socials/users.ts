@@ -65,7 +65,7 @@ export const getUserClubs = https.onRequest(async (req, res) => {
   }
 })
 
-export const addUserClub = https.onRequest(async (req, res) => {
+export const addUserToClub = https.onRequest(async (req, res) => {
   try {
     const { userEmail, clubId } = JSON.parse(req.body)
     if (!userEmail || !clubId) {
@@ -90,11 +90,7 @@ export const addUserClub = https.onRequest(async (req, res) => {
     }
     const club = clubDoc.data() as Club
 
-    if (
-      club.members.includes(userEmail) ||
-      club.pending.includes(userEmail) ||
-      club.admins.includes(userEmail)
-    ) {
+    if (club.members.includes(userEmail) || club.admins.includes(userEmail)) {
       res.status(400).send({ error: 'User already in club' })
       return
     }
@@ -104,6 +100,7 @@ export const addUserClub = https.onRequest(async (req, res) => {
       .doc(clubId)
       .update({
         members: admin.firestore.FieldValue.arrayUnion(userEmail),
+        pending: admin.firestore.FieldValue.arrayRemove(userEmail),
       })
 
     await db
@@ -135,7 +132,7 @@ export const addUserClub = https.onRequest(async (req, res) => {
   }
 })
 
-export const addUserToPending = https.onRequest(async (req, res) => {
+export const addUserToPendingClub = https.onRequest(async (req, res) => {
   try {
     const { userEmail, clubId } = JSON.parse(req.body)
     if (!userEmail || !clubId) {
@@ -197,7 +194,7 @@ export const addUserToPending = https.onRequest(async (req, res) => {
   }
 })
 
-export const removeUserClub = https.onRequest(async (req, res) => {
+export const removeUserFromClub = https.onRequest(async (req, res) => {
   try {
     const { userEmail, clubId } = JSON.parse(req.body)
     if (!userEmail || !clubId) {
