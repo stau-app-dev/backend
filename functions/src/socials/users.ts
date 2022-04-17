@@ -65,41 +65,37 @@ export const getUserClubs = https.onRequest(async (req, res) => {
   }
 })
 
-export const addUserToClub = https.onRequest(async (req, res) => {
+export const addUserClub = https.onRequest(async (req, res) => {
   try {
-    const { userId, clubId } = JSON.parse(req.body)
-    if (typeof userId !== 'string' || typeof clubId !== 'string') {
+    const { userEmail, clubId } = JSON.parse(req.body)
+    if (!userEmail || !clubId) {
       res.status(400).send({ error: 'Invalid parameters' })
       return
     }
 
-    const userDoc = await db.collection(NEW_USERS_COLLECTION).doc(userId).get()
-
-    if (!userDoc.exists) {
+    const userDoc = await db
+      .collection(NEW_USERS_COLLECTION)
+      .where('email', '==', userEmail)
+      .get()
+    if (userDoc.empty) {
       res.status(404).send({ error: 'User not found' })
       return
     }
+    const userId = userDoc.docs[0].id
 
     const clubDoc = await db.collection(NEW_CLUBS_COLLECTION).doc(clubId).get()
-
     if (!clubDoc.exists) {
       res.status(404).send({ error: 'Club not found' })
       return
     }
-
     const club = clubDoc.data() as Club
 
     if (
-      club.members.includes(userId) ||
-      club.pending.includes(userId) ||
-      club.admins.includes(userId)
+      club.members.includes(userEmail) ||
+      club.pending.includes(userEmail) ||
+      club.admins.includes(userEmail)
     ) {
       res.status(400).send({ error: 'User already in club' })
-      return
-    }
-
-    if (club.joinPreference === 0) {
-      res.status(400).send({ error: 'Club does not allow new members' })
       return
     }
 
@@ -107,8 +103,7 @@ export const addUserToClub = https.onRequest(async (req, res) => {
       .collection(NEW_CLUBS_COLLECTION)
       .doc(clubId)
       .update({
-        members: admin.firestore.FieldValue.arrayUnion(userId),
-        pending: admin.firestore.FieldValue.arrayRemove(userId),
+        members: admin.firestore.FieldValue.arrayUnion(userEmail),
       })
 
     await db
@@ -140,42 +135,36 @@ export const addUserToClub = https.onRequest(async (req, res) => {
   }
 })
 
-export const addUserToPendingClub = https.onRequest(async (req, res) => {
+export const addUserToPending = https.onRequest(async (req, res) => {
   try {
-    const { userId, clubId } = JSON.parse(req.body)
-    if (typeof userId !== 'string' || typeof clubId !== 'string') {
+    const { userEmail, clubId } = JSON.parse(req.body)
+    if (!userEmail || !clubId) {
       res.status(400).send({ error: 'Invalid parameters' })
       return
     }
 
-    const userDoc = await db.collection(NEW_USERS_COLLECTION).doc(userId).get()
-
-    if (!userDoc.exists) {
+    const userDoc = await db
+      .collection(NEW_USERS_COLLECTION)
+      .where('email', '==', userEmail)
+      .get()
+    if (userDoc.empty) {
       res.status(404).send({ error: 'User not found' })
       return
     }
 
     const clubDoc = await db.collection(NEW_CLUBS_COLLECTION).doc(clubId).get()
-
     if (!clubDoc.exists) {
       res.status(404).send({ error: 'Club not found' })
       return
     }
-
     const club = clubDoc.data() as Club
 
-    if (club.members.includes(userId)) {
+    if (
+      club.members.includes(userEmail) ||
+      club.pending.includes(userEmail) ||
+      club.admins.includes(userEmail)
+    ) {
       res.status(400).send({ error: 'User already in club' })
-      return
-    }
-
-    if (club.admins.includes(userId)) {
-      res.status(400).send({ error: 'User already admin in club' })
-      return
-    }
-
-    if (club.joinPreference === 0) {
-      res.status(400).send({ error: 'Club does not allow new members' })
       return
     }
 
@@ -183,12 +172,12 @@ export const addUserToPendingClub = https.onRequest(async (req, res) => {
       .collection(NEW_CLUBS_COLLECTION)
       .doc(clubId)
       .update({
-        pending: admin.firestore.FieldValue.arrayUnion(userId),
+        pending: admin.firestore.FieldValue.arrayUnion(userEmail),
       })
 
     res.json({
       data: {
-        message: 'User added to pending club',
+        message: 'User added to pending',
       },
     })
   } catch (error) {
@@ -208,34 +197,35 @@ export const addUserToPendingClub = https.onRequest(async (req, res) => {
   }
 })
 
-export const removeUserFromClub = https.onRequest(async (req, res) => {
+export const removeUserClub = https.onRequest(async (req, res) => {
   try {
-    const { userId, clubId } = JSON.parse(req.body)
-    if (typeof userId !== 'string' || typeof clubId !== 'string') {
+    const { userEmail, clubId } = JSON.parse(req.body)
+    if (!userEmail || !clubId) {
       res.status(400).send({ error: 'Invalid parameters' })
       return
     }
 
-    const userDoc = await db.collection(NEW_USERS_COLLECTION).doc(userId).get()
-
-    if (!userDoc.exists) {
+    const userDoc = await db
+      .collection(NEW_USERS_COLLECTION)
+      .where('email', '==', userEmail)
+      .get()
+    if (userDoc.empty) {
       res.status(404).send({ error: 'User not found' })
       return
     }
+    const userId = userDoc.docs[0].id
 
     const clubDoc = await db.collection(NEW_CLUBS_COLLECTION).doc(clubId).get()
-
     if (!clubDoc.exists) {
       res.status(404).send({ error: 'Club not found' })
       return
     }
-
     const club = clubDoc.data() as Club
 
     if (
-      !club.members.includes(userId) &&
-      !club.admins.includes(userId) &&
-      !club.pending.includes(userId)
+      !club.members.includes(userEmail) ||
+      !club.admins.includes(userEmail) ||
+      !club.pending.includes(userEmail)
     ) {
       res.status(400).send({ error: 'User not in club' })
       return
@@ -245,9 +235,9 @@ export const removeUserFromClub = https.onRequest(async (req, res) => {
       .collection(NEW_CLUBS_COLLECTION)
       .doc(clubId)
       .update({
-        members: admin.firestore.FieldValue.arrayRemove(userId),
-        admins: admin.firestore.FieldValue.arrayRemove(userId),
-        pending: admin.firestore.FieldValue.arrayRemove(userId),
+        admins: admin.firestore.FieldValue.arrayRemove(userEmail),
+        members: admin.firestore.FieldValue.arrayRemove(userEmail),
+        pending: admin.firestore.FieldValue.arrayRemove(userEmail),
       })
 
     await db
