@@ -94,11 +94,6 @@ export const addUserToClub = https.onRequest(async (req, res) => {
       return
     }
 
-    if (club.pending.includes(userId)) {
-      res.status(400).send({ error: 'User already pending in club' })
-      return
-    }
-
     if (club.admins.includes(userId)) {
       res.status(400).send({ error: 'User already admin in club' })
       return
@@ -133,6 +128,74 @@ export const addUserToClub = https.onRequest(async (req, res) => {
     res.json({
       data: {
         message: 'User added to club',
+      },
+    })
+  } catch (error) {
+    if (error instanceof Error) {
+      res.status(500).json({
+        error: {
+          message: error.message,
+        },
+      })
+    } else {
+      res.status(500).json({
+        error: {
+          message: GENERIC_ERROR_MESSAGE,
+        },
+      })
+    }
+  }
+})
+
+export const addUserToPendingClub = https.onRequest(async (req, res) => {
+  try {
+    const { userId, clubId } = req.query
+    if (typeof userId !== 'string' || typeof clubId !== 'string') {
+      res.status(400).send({ error: 'Invalid parameters' })
+      return
+    }
+
+    const userDoc = await db.collection(NEW_USERS_COLLECTION).doc(userId).get()
+
+    if (!userDoc.exists) {
+      res.status(404).send({ error: 'User not found' })
+      return
+    }
+
+    const clubDoc = await db.collection(NEW_CLUBS_COLLECTION).doc(clubId).get()
+
+    if (!clubDoc.exists) {
+      res.status(404).send({ error: 'Club not found' })
+      return
+    }
+
+    const club = clubDoc.data() as Club
+
+    if (club.members.includes(userId)) {
+      res.status(400).send({ error: 'User already in club' })
+      return
+    }
+
+    if (club.admins.includes(userId)) {
+      res.status(400).send({ error: 'User already admin in club' })
+      return
+    }
+
+    if (club.joinPreference === 0) {
+      res.status(400).send({ error: 'Club does not allow new members' })
+      return
+    }
+
+    await db
+      .collection(NEW_CLUBS_COLLECTION)
+      .doc(clubId)
+      .update({
+        pending: admin.firestore.FieldValue.arrayUnion(userId),
+      })
+
+    res.json({
+      data: {
+        message: 'User added to pending club',
       },
     })
   } catch (error) {
