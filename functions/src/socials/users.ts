@@ -220,8 +220,8 @@ export const removeUserFromClub = https.onRequest(async (req, res) => {
     const club = clubDoc.data() as Club
 
     if (
-      !club.members.includes(userEmail) ||
-      !club.admins.includes(userEmail) ||
+      !club.members.includes(userEmail) &&
+      !club.admins.includes(userEmail) &&
       !club.pending.includes(userEmail)
     ) {
       res.status(400).send({ error: 'User is not a member of this club' })
