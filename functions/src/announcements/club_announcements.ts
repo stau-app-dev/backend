@@ -83,3 +83,35 @@ export const addClubAnnouncement = https.onRequest(async (req, res) => {
     }
   }
 })
+
+export const deleteClubAnnouncement = https.onRequest(async (req, res) => {
+  try {
+    const { id } = JSON.parse(req.body)
+    if (!id) {
+      res.status(400).send({ error: 'Invalid parameters' })
+      return
+    }
+
+    await db.collection(NEW_CLUB_ANNOUNCEMENTS_COLLECTION).doc(id).delete()
+
+    res.json({
+      data: {
+        message: 'Successfully deleted announcement!',
+      },
+    })
+  } catch (error) {
+    if (error instanceof Error) {
+      res.status(500).json({
+        error: {
+          message: error.message,
+        },
+      })
+    } else {
+      res.status(500).json({
+        error: {
+          message: GENERIC_ERROR_MESSAGE,
+        },
+      })
+    }
+  }
+})
