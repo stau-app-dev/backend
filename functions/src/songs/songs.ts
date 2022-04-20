@@ -77,6 +77,38 @@ export const addSong = https.onRequest(async (req, res) => {
   }
 })
 
+export const deleteSong = https.onRequest(async (req, res) => {
+  try {
+    const { id } = JSON.parse(req.body)
+    if (!id) {
+      res.status(400).send({ error: 'Invalid parameters' })
+      return
+    }
+
+    await db.collection(NEW_SONGS_COLLECTION).doc(id).delete()
+
+    res.json({
+      data: {
+        message: 'Successfully deleted song!',
+      },
+    })
+  } catch (error) {
+    if (error instanceof Error) {
+      res.status(500).json({
+        error: {
+          message: error.message,
+        },
+      })
+    } else {
+      res.status(500).json({
+        error: {
+          message: GENERIC_ERROR_MESSAGE,
+        },
+      })
+    }
+  }
+})
+
 export const upvoteSong = https.onRequest(async (req, res) => {
   try {
     const { songId, upvotes } = req.query
