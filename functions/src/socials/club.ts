@@ -76,21 +76,22 @@ export const addClub = https.onRequest(async (req, res) => {
     } as Club
 
     const clubAddRes = await db.collection(NEW_CLUBS_COLLECTION).add(club)
+    await Promise.all([
+      await db
+        .collection(NEW_CLUBS_QUICK_ACCESS_COLLECTION)
+        .doc(clubAddRes.id)
+        .create({
+          pictureId,
+          name,
+        }),
 
-    await db
-      .collection(NEW_CLUBS_QUICK_ACCESS_COLLECTION)
-      .doc(clubAddRes.id)
-      .create({
-        pictureId,
-        name,
-      })
-
-    await db
-      .collection(NEW_USERS_COLLECTION)
-      .doc(userId)
-      .update({
-        clubs: admin.firestore.FieldValue.arrayUnion(clubAddRes.id),
-      })
+      await db
+        .collection(NEW_USERS_COLLECTION)
+        .doc(userId)
+        .update({
+          clubs: admin.firestore.FieldValue.arrayUnion(clubAddRes.id),
+        }),
+    ])
 
     res.json({
       data: {

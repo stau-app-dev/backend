@@ -11,20 +11,22 @@ export const deleteNonValidEmailDomains = https.onRequest(async (req, res) => {
   try {
     let nextPageToken
     let users = await auth.listUsers(1000, nextPageToken)
-    const results = []
+    const results: (string | undefined)[] = []
 
     // We have under 2000 users
     for (let i = 0; i < 2; i++) {
-      for (const user of users.users) {
-        if (
-          !user.email!.endsWith(YCDSBK12_EMAIL) &&
-          !user.email!.endsWith(YCDSB_EMAIL) &&
-          !ALLOWED_EMAILS.includes(user.email!)
-        ) {
-          await auth.deleteUser(user.uid)
-          results.push(user.email)
-        }
-      }
+      await Promise.all([
+        users.users.map(async (user) => {
+          if (
+            !user.email!.endsWith(YCDSBK12_EMAIL) &&
+            !user.email!.endsWith(YCDSB_EMAIL) &&
+            !ALLOWED_EMAILS.includes(user.email!)
+          ) {
+            await auth.deleteUser(user.uid)
+            results.push(user.email)
+          }
+        }),
+      ])
       nextPageToken = users.pageToken
       users = await auth.listUsers(1000, nextPageToken)
     }

@@ -39,11 +39,13 @@ export const getUserClubs = https.onRequest(async (req, res) => {
       })
     )
 
-    for (const club of clubs) {
-      club.pictureUrl = await getSignedUrlFromFilePath(
-        `newClubBanners/${club.pictureId}`
-      )
-    }
+    await Promise.all([
+      ...clubs.map(async (club) => {
+        club.pictureUrl = await getSignedUrlFromFilePath(
+          `newClubBanners/${club.pictureId}`
+        )
+      }),
+    ])
 
     res.json({
       data: clubs,
@@ -95,11 +97,13 @@ export const getUserClubsNotJoined = https.onRequest(async (req, res) => {
         } as ClubQuickAccessItem)
     )
 
-    for (const club of clubsNotJoinedData) {
-      club.pictureUrl = await getSignedUrlFromFilePath(
-        `newClubBanners/${club.pictureId}`
-      )
-    }
+    await Promise.all([
+      ...clubsNotJoinedData.map(async (club) => {
+        club.pictureUrl = await getSignedUrlFromFilePath(
+          `newClubBanners/${club.pictureId}`
+        )
+      }),
+    ])
 
     res.json({
       data: clubsNotJoinedData,
@@ -151,20 +155,22 @@ export const addUserToClub = https.onRequest(async (req, res) => {
       return
     }
 
-    await db
-      .collection(NEW_CLUBS_COLLECTION)
-      .doc(clubId)
-      .update({
-        members: admin.firestore.FieldValue.arrayUnion(userEmail),
-        pending: admin.firestore.FieldValue.arrayRemove(userEmail),
-      })
+    await Promise.all([
+      await db
+        .collection(NEW_CLUBS_COLLECTION)
+        .doc(clubId)
+        .update({
+          members: admin.firestore.FieldValue.arrayUnion(userEmail),
+          pending: admin.firestore.FieldValue.arrayRemove(userEmail),
+        }),
 
-    await db
-      .collection(NEW_USERS_COLLECTION)
-      .doc(userId)
-      .update({
-        clubs: admin.firestore.FieldValue.arrayUnion(clubId),
-      })
+      await db
+        .collection(NEW_USERS_COLLECTION)
+        .doc(userId)
+        .update({
+          clubs: admin.firestore.FieldValue.arrayUnion(clubId),
+        }),
+    ])
 
     res.json({
       data: {
@@ -284,21 +290,23 @@ export const removeUserFromClub = https.onRequest(async (req, res) => {
       return
     }
 
-    await db
-      .collection(NEW_CLUBS_COLLECTION)
-      .doc(clubId)
-      .update({
-        admins: admin.firestore.FieldValue.arrayRemove(userEmail),
-        members: admin.firestore.FieldValue.arrayRemove(userEmail),
-        pending: admin.firestore.FieldValue.arrayRemove(userEmail),
-      })
+    await Promise.all([
+      await db
+        .collection(NEW_CLUBS_COLLECTION)
+        .doc(clubId)
+        .update({
+          admins: admin.firestore.FieldValue.arrayRemove(userEmail),
+          members: admin.firestore.FieldValue.arrayRemove(userEmail),
+          pending: admin.firestore.FieldValue.arrayRemove(userEmail),
+        }),
 
-    await db
-      .collection(NEW_USERS_COLLECTION)
-      .doc(userId)
-      .update({
-        clubs: admin.firestore.FieldValue.arrayRemove(clubId),
-      })
+      await db
+        .collection(NEW_USERS_COLLECTION)
+        .doc(userId)
+        .update({
+          clubs: admin.firestore.FieldValue.arrayRemove(clubId),
+        }),
+    ])
 
     res.json({
       data: {
