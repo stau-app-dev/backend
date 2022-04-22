@@ -7,6 +7,7 @@ import {
   NEW_USERS_COLLECTION,
 } from '../data/consts'
 import { Club } from '../models/social'
+import { User } from '../models/users'
 
 export const getClub = https.onRequest(async (req, res) => {
   try {
@@ -64,6 +65,8 @@ export const addClub = https.onRequest(async (req, res) => {
       return
     }
     const userId = userDoc.docs[0].id
+    const user = userDoc.docs[0].data() as User
+    const token = user.msgTokens[0]
 
     const club = {
       admins: [email],
@@ -91,6 +94,8 @@ export const addClub = https.onRequest(async (req, res) => {
         .update({
           clubs: admin.firestore.FieldValue.arrayUnion(clubAddRes.id),
         }),
+
+      await admin.messaging().subscribeToTopic(token, clubAddRes.id),
     ])
 
     res.json({

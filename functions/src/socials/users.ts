@@ -7,6 +7,7 @@ import {
   NEW_USERS_COLLECTION,
 } from '../data/consts'
 import { Club, ClubQuickAccessItem } from '../models/social'
+import { User } from '../models/users'
 import { getSignedUrlFromFilePath } from '../storage'
 
 export const getUserClubs = https.onRequest(async (req, res) => {
@@ -142,6 +143,8 @@ export const addUserToClub = https.onRequest(async (req, res) => {
       return
     }
     const userId = userDoc.docs[0].id
+    const user = userDoc.docs[0].data() as User
+    const token = user.msgTokens[0]
 
     const clubDoc = await db.collection(NEW_CLUBS_COLLECTION).doc(clubId).get()
     if (!clubDoc.exists) {
@@ -170,6 +173,8 @@ export const addUserToClub = https.onRequest(async (req, res) => {
         .update({
           clubs: admin.firestore.FieldValue.arrayUnion(clubId),
         }),
+
+      await admin.messaging().subscribeToTopic(token, clubId),
     ])
 
     res.json({
@@ -210,6 +215,8 @@ export const addUserToPendingClub = https.onRequest(async (req, res) => {
       res.status(404).send({ error: 'User not found' })
       return
     }
+    const user = userDoc.docs[0].data() as User
+    const token = user.msgTokens[0]
 
     const clubDoc = await db.collection(NEW_CLUBS_COLLECTION).doc(clubId).get()
     if (!clubDoc.exists) {
@@ -227,12 +234,16 @@ export const addUserToPendingClub = https.onRequest(async (req, res) => {
       return
     }
 
-    await db
-      .collection(NEW_CLUBS_COLLECTION)
-      .doc(clubId)
-      .update({
-        pending: admin.firestore.FieldValue.arrayUnion(userEmail),
-      })
+    await Promise.all([
+      await db
+        .collection(NEW_CLUBS_COLLECTION)
+        .doc(clubId)
+        .update({
+          pending: admin.firestore.FieldValue.arrayUnion(userEmail),
+        }),
+
+      await admin.messaging().subscribeToTopic(token, clubId),
+    ])
 
     res.json({
       data: {
@@ -273,6 +284,8 @@ export const removeUserFromClub = https.onRequest(async (req, res) => {
       return
     }
     const userId = userDoc.docs[0].id
+    const user = userDoc.docs[0].data() as User
+    const token = user.msgTokens[0]
 
     const clubDoc = await db.collection(NEW_CLUBS_COLLECTION).doc(clubId).get()
     if (!clubDoc.exists) {
@@ -306,6 +319,8 @@ export const removeUserFromClub = https.onRequest(async (req, res) => {
         .update({
           clubs: admin.firestore.FieldValue.arrayRemove(clubId),
         }),
+
+      await admin.messaging().unsubscribeFromTopic(token, clubId),
     ])
 
     res.json({
