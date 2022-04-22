@@ -93,6 +93,7 @@ export const addClub = https.onRequest(async (req, res) => {
         .doc(userId)
         .update({
           clubs: admin.firestore.FieldValue.arrayUnion(clubAddRes.id),
+          msgTokens: admin.firestore.FieldValue.arrayUnion(clubAddRes.id),
         }),
 
       await admin.messaging().subscribeToTopic(token, clubAddRes.id),

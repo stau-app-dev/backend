@@ -172,6 +172,7 @@ export const addUserToClub = https.onRequest(async (req, res) => {
         .doc(userId)
         .update({
           clubs: admin.firestore.FieldValue.arrayUnion(clubId),
+          msgTokens: admin.firestore.FieldValue.arrayUnion(clubId),
         }),
 
       await admin.messaging().subscribeToTopic(token, clubId),
@@ -318,6 +319,7 @@ export const removeUserFromClub = https.onRequest(async (req, res) => {
         .doc(userId)
         .update({
           clubs: admin.firestore.FieldValue.arrayRemove(clubId),
+          msgTokens: admin.firestore.FieldValue.arrayRemove(clubId),
         }),
 
       await admin.messaging().unsubscribeFromTopic(token, clubId),
