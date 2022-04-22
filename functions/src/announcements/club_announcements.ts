@@ -1,5 +1,5 @@
 import { https } from 'firebase-functions'
-import { db } from '../admin'
+import { admin, db } from '../admin'
 import {
   GENERIC_ERROR_MESSAGE,
   NEW_CLUB_ANNOUNCEMENTS_COLLECTION,
@@ -59,7 +59,17 @@ export const addClubAnnouncement = https.onRequest(async (req, res) => {
       creatorName,
     } as ClubAnnouncement
 
-    await db.collection(NEW_CLUB_ANNOUNCEMENTS_COLLECTION).add(clubAnnouncement)
+    await Promise.all([
+      await db
+        .collection(NEW_CLUB_ANNOUNCEMENTS_COLLECTION)
+        .add(clubAnnouncement),
+      await admin.messaging().sendToTopic(clubId, {
+        notification: {
+          title: '${clubName} has a new announcement',
+          body: content,
+        },
+      }),
+    ])
 
     res.json({
       data: {
