@@ -65,7 +65,7 @@ export const addClubAnnouncement = https.onRequest(async (req, res) => {
         .add(clubAnnouncement),
       await admin.messaging().sendToTopic(clubId, {
         notification: {
-          title: '${clubName} has a new announcement',
+          title: `${clubName} has a new announcement`,
           body: content,
         },
       }),
