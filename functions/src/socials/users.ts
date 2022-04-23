@@ -172,7 +172,7 @@ export const addUserToClub = https.onRequest(async (req, res) => {
         .doc(userId)
         .update({
           clubs: admin.firestore.FieldValue.arrayUnion(clubId),
-          msgTokens: admin.firestore.FieldValue.arrayUnion(clubId),
+          notification: admin.firestore.FieldValue.arrayUnion(clubId),
         }),
 
       await admin.messaging().subscribeToTopic(token, clubId),
@@ -268,6 +268,65 @@ export const addUserToPendingClub = https.onRequest(async (req, res) => {
   }
 })
 
+export const promoteUserToAdmin = https.onRequest(async (req, res) => {
+  try {
+    const { userEmail, clubId } = JSON.parse(req.body)
+    if (!userEmail || !clubId) {
+      res.status(400).send({ error: 'Invalid parameters' })
+      return
+    }
+
+    const userDoc = await db
+      .collection(NEW_USERS_COLLECTION)
+      .where('email', '==', userEmail)
+      .get()
+    if (userDoc.empty) {
+      res.status(404).send({ error: 'User not found' })
+      return
+    }
+
+    const clubDoc = await db.collection(NEW_CLUBS_COLLECTION).doc(clubId).get()
+    if (!clubDoc.exists) {
+      res.status(404).send({ error: 'Club not found' })
+      return
+    }
+    const club = clubDoc.data() as Club
+
+    if (!club.members.includes(userEmail) || !club.admins.includes(userEmail)) {
+      res.status(400).send({ error: 'User is not a member of this club' })
+      return
+    }
+
+    await db
+      .collection(NEW_CLUBS_COLLECTION)
+      .doc(clubId)
+      .update({
+        admins: admin.firestore.FieldValue.arrayUnion(userEmail),
+        members: admin.firestore.FieldValue.arrayRemove(userEmail),
+      })
+
+    res.json({
+      data: {
+        message: 'User has been promoted to admin',
+      },
+    })
+  } catch (error) {
+    if (error instanceof Error) {
+      res.status(500).json({
+        error: {
+          message: error.message,
+        },
+      })
+    } else {
+      res.status(500).json({
+        error: {
+          message: GENERIC_ERROR_MESSAGE,
+        },
+      })
+    }
+  }
+})
+
 export const removeUserFromClub = https.onRequest(async (req, res) => {
   try {
     const { userEmail, clubId } = JSON.parse(req.body)
@@ -319,7 +378,7 @@ export const removeUserFromClub = https.onRequest(async (req, res) => {
         .doc(userId)
         .update({
           clubs: admin.firestore.FieldValue.arrayRemove(clubId),
-          msgTokens: admin.firestore.FieldValue.arrayRemove(clubId),
+          notification: admin.firestore.FieldValue.arrayRemove(clubId),
         }),
 
       await admin.messaging().unsubscribeFromTopic(token, clubId),
