@@ -31,11 +31,13 @@ export const getCafeMenuItems = https.onRequest(async (req, res) => {
       }
     }) as CafeItem[]
 
-    for (const item of items) {
-      item.pictureUrl = await getSignedUrlFromFilePath(
-        `newCafeMenuItems/${item.pictureId}`
-      )
-    }
+    await Promise.all([
+      ...items.map(async (item) => {
+        item.pictureUrl = await getSignedUrlFromFilePath(
+          `newCafeMenuItems/${item.pictureId}`
+        )
+      }),
+    ])
 
     res.json({
       data: items,

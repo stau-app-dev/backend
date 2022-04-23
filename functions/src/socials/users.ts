@@ -7,6 +7,7 @@ import {
   NEW_USERS_COLLECTION,
 } from '../data/consts'
 import { Club, ClubQuickAccessItem } from '../models/social'
+import { User } from '../models/users'
 import { getSignedUrlFromFilePath } from '../storage'
 
 export const getUserClubs = https.onRequest(async (req, res) => {
@@ -39,11 +40,13 @@ export const getUserClubs = https.onRequest(async (req, res) => {
       })
     )
 
-    for (const club of clubs) {
-      club.pictureUrl = await getSignedUrlFromFilePath(
-        `newClubBanners/${club.pictureId}`
-      )
-    }
+    await Promise.all([
+      ...clubs.map(async (club) => {
+        club.pictureUrl = await getSignedUrlFromFilePath(
+          `newClubBanners/${club.pictureId}`
+        )
+      }),
+    ])
 
     res.json({
       data: clubs,
@@ -95,11 +98,13 @@ export const getUserClubsNotJoined = https.onRequest(async (req, res) => {
         } as ClubQuickAccessItem)
     )
 
-    for (const club of clubsNotJoinedData) {
-      club.pictureUrl = await getSignedUrlFromFilePath(
-        `newClubBanners/${club.pictureId}`
-      )
-    }
+    await Promise.all([
+      ...clubsNotJoinedData.map(async (club) => {
+        club.pictureUrl = await getSignedUrlFromFilePath(
+          `newClubBanners/${club.pictureId}`
+        )
+      }),
+    ])
 
     res.json({
       data: clubsNotJoinedData,
@@ -138,6 +143,8 @@ export const addUserToClub = https.onRequest(async (req, res) => {
       return
     }
     const userId = userDoc.docs[0].id
+    const user = userDoc.docs[0].data() as User
+    const token = user.msgTokens[0]
 
     const clubDoc = await db.collection(NEW_CLUBS_COLLECTION).doc(clubId).get()
     if (!clubDoc.exists) {
@@ -151,20 +158,25 @@ export const addUserToClub = https.onRequest(async (req, res) => {
       return
     }
 
-    await db
-      .collection(NEW_CLUBS_COLLECTION)
-      .doc(clubId)
-      .update({
-        members: admin.firestore.FieldValue.arrayUnion(userEmail),
-        pending: admin.firestore.FieldValue.arrayRemove(userEmail),
-      })
+    await Promise.all([
+      await db
+        .collection(NEW_CLUBS_COLLECTION)
+        .doc(clubId)
+        .update({
+          members: admin.firestore.FieldValue.arrayUnion(userEmail),
+          pending: admin.firestore.FieldValue.arrayRemove(userEmail),
+        }),
 
-    await db
-      .collection(NEW_USERS_COLLECTION)
-      .doc(userId)
-      .update({
-        clubs: admin.firestore.FieldValue.arrayUnion(clubId),
-      })
+      await db
+        .collection(NEW_USERS_COLLECTION)
+        .doc(userId)
+        .update({
+          clubs: admin.firestore.FieldValue.arrayUnion(clubId),
+          notification: admin.firestore.FieldValue.arrayUnion(clubId),
+        }),
+
+      await admin.messaging().subscribeToTopic(token, clubId),
+    ])
 
     res.json({
       data: {
@@ -204,6 +216,8 @@ export const addUserToPendingClub = https.onRequest(async (req, res) => {
       res.status(404).send({ error: 'User not found' })
       return
     }
+    const user = userDoc.docs[0].data() as User
+    const token = user.msgTokens[0]
 
     const clubDoc = await db.collection(NEW_CLUBS_COLLECTION).doc(clubId).get()
     if (!clubDoc.exists) {
@@ -221,16 +235,79 @@ export const addUserToPendingClub = https.onRequest(async (req, res) => {
       return
     }
 
-    await db
-      .collection(NEW_CLUBS_COLLECTION)
-      .doc(clubId)
-      .update({
-        pending: admin.firestore.FieldValue.arrayUnion(userEmail),
-      })
+    await Promise.all([
+      await db
+        .collection(NEW_CLUBS_COLLECTION)
+        .doc(clubId)
+        .update({
+          pending: admin.firestore.FieldValue.arrayUnion(userEmail),
+        }),
+
+      await admin.messaging().subscribeToTopic(token, clubId),
+    ])
 
     res.json({
       data: {
         message: 'You have been added to the pending list',
+      },
+    })
+  } catch (error) {
+    if (error instanceof Error) {
+      res.status(500).json({
+        error: {
+          message: error.message,
+        },
+      })
+    } else {
+      res.status(500).json({
+        error: {
+          message: GENERIC_ERROR_MESSAGE,
+        },
+      })
+    }
+  }
+})
+
+export const promoteUserToAdmin = https.onRequest(async (req, res) => {
+  try {
+    const { userEmail, clubId } = JSON.parse(req.body)
+    if (!userEmail || !clubId) {
+      res.status(400).send({ error: 'Invalid parameters' })
+      return
+    }
+
+    const userDoc = await db
+      .collection(NEW_USERS_COLLECTION)
+      .where('email', '==', userEmail)
+      .get()
+    if (userDoc.empty) {
+      res.status(404).send({ error: 'User not found' })
+      return
+    }
+
+    const clubDoc = await db.collection(NEW_CLUBS_COLLECTION).doc(clubId).get()
+    if (!clubDoc.exists) {
+      res.status(404).send({ error: 'Club not found' })
+      return
+    }
+    const club = clubDoc.data() as Club
+
+    if (!club.members.includes(userEmail)) {
+      res.status(400).send({ error: 'User is not a member of this club' })
+      return
+    }
+
+    await db
+      .collection(NEW_CLUBS_COLLECTION)
+      .doc(clubId)
+      .update({
+        admins: admin.firestore.FieldValue.arrayUnion(userEmail),
+        members: admin.firestore.FieldValue.arrayRemove(userEmail),
+      })
+
+    res.json({
+      data: {
+        message: 'User has been promoted to admin',
       },
     })
   } catch (error) {
@@ -267,6 +344,8 @@ export const removeUserFromClub = https.onRequest(async (req, res) => {
       return
     }
     const userId = userDoc.docs[0].id
+    const user = userDoc.docs[0].data() as User
+    const token = user.msgTokens[0]
 
     const clubDoc = await db.collection(NEW_CLUBS_COLLECTION).doc(clubId).get()
     if (!clubDoc.exists) {
@@ -284,21 +363,26 @@ export const removeUserFromClub = https.onRequest(async (req, res) => {
       return
     }
 
-    await db
-      .collection(NEW_CLUBS_COLLECTION)
-      .doc(clubId)
-      .update({
-        admins: admin.firestore.FieldValue.arrayRemove(userEmail),
-        members: admin.firestore.FieldValue.arrayRemove(userEmail),
-        pending: admin.firestore.FieldValue.arrayRemove(userEmail),
-      })
+    await Promise.all([
+      await db
+        .collection(NEW_CLUBS_COLLECTION)
+        .doc(clubId)
+        .update({
+          admins: admin.firestore.FieldValue.arrayRemove(userEmail),
+          members: admin.firestore.FieldValue.arrayRemove(userEmail),
+          pending: admin.firestore.FieldValue.arrayRemove(userEmail),
+        }),
 
-    await db
-      .collection(NEW_USERS_COLLECTION)
-      .doc(userId)
-      .update({
-        clubs: admin.firestore.FieldValue.arrayRemove(clubId),
-      })
+      await db
+        .collection(NEW_USERS_COLLECTION)
+        .doc(userId)
+        .update({
+          clubs: admin.firestore.FieldValue.arrayRemove(clubId),
+          notification: admin.firestore.FieldValue.arrayRemove(clubId),
+        }),
+
+      await admin.messaging().unsubscribeFromTopic(token, clubId),
+    ])
 
     res.json({
       data: {
