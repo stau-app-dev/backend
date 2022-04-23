@@ -148,7 +148,13 @@ export const updateClub = https.onRequest(async (req, res) => {
       pictureId,
     } as Club
 
-    await db.collection(NEW_CLUBS_COLLECTION).doc(clubId).set(updatedClub)
+    await Promise.all([
+      await db.collection(NEW_CLUBS_QUICK_ACCESS_COLLECTION).doc(clubId).set({
+        pictureId,
+        name,
+      }),
+      await db.collection(NEW_CLUBS_COLLECTION).doc(clubId).set(updatedClub),
+    ])
 
     res.json({
       data: {
