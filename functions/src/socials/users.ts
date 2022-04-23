@@ -292,7 +292,7 @@ export const promoteUserToAdmin = https.onRequest(async (req, res) => {
     }
     const club = clubDoc.data() as Club
 
-    if (!club.members.includes(userEmail) || !club.admins.includes(userEmail)) {
+    if (!club.members.includes(userEmail)) {
       res.status(400).send({ error: 'User is not a member of this club' })
       return
     }

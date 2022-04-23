@@ -120,3 +120,54 @@ export const addClub = https.onRequest(async (req, res) => {
     }
   }
 })
+
+export const updateClub = https.onRequest(async (req, res) => {
+  try {
+    const { clubId, description, joinPreference, name, pictureId } = JSON.parse(
+      req.body
+    )
+    if (!clubId || !description || !joinPreference || !name || !pictureId) {
+      res.status(400).send({ error: 'Invalid parameters' })
+      return
+    }
+
+    const clubDoc = await db.collection(NEW_CLUBS_COLLECTION).doc(clubId).get()
+
+    if (!clubDoc.exists) {
+      res.status(404).send({ error: 'Club not found' })
+      return
+    }
+
+    const club = clubDoc.data() as Club
+
+    const updatedClub = {
+      ...club,
+      description,
+      joinPreference: Number(joinPreference),
+      name,
+      pictureId,
+    } as Club
+
+    await db.collection(NEW_CLUBS_COLLECTION).doc(clubId).set(updatedClub)
+
+    res.json({
+      data: {
+        message: 'Successfully updated club!',
+      },
+    })
+  } catch (error) {
+    if (error instanceof Error) {
+      res.status(500).json({
+        error: {
+          message: error.message,
+        },
+      })
+    } else {
+      res.status(500).json({
+        error: {
+          message: GENERIC_ERROR_MESSAGE,
+        },
+      })
+    }
+  }
+})
