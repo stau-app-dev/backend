@@ -1,5 +1,6 @@
 export * from './announcements'
 export * from './home'
+export * from './notifications'
 export * from './users'
 export * from './socials'
 export * from './songs'
