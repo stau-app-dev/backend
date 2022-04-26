@@ -166,7 +166,6 @@ export const addUserToClub = https.onRequest(async (req, res) => {
           members: admin.firestore.FieldValue.arrayUnion(userEmail),
           pending: admin.firestore.FieldValue.arrayRemove(userEmail),
         }),
-
       await db
         .collection(NEW_USERS_COLLECTION)
         .doc(userId)
@@ -174,7 +173,6 @@ export const addUserToClub = https.onRequest(async (req, res) => {
           clubs: admin.firestore.FieldValue.arrayUnion(clubId),
           notifications: admin.firestore.FieldValue.arrayUnion(clubId),
         }),
-
       await admin.messaging().subscribeToTopic(token, clubId),
     ])
 
@@ -242,7 +240,6 @@ export const addUserToPendingClub = https.onRequest(async (req, res) => {
         .update({
           pending: admin.firestore.FieldValue.arrayUnion(userEmail),
         }),
-
       await admin.messaging().subscribeToTopic(token, clubId),
     ])
 
@@ -372,7 +369,6 @@ export const removeUserFromClub = https.onRequest(async (req, res) => {
           members: admin.firestore.FieldValue.arrayRemove(userEmail),
           pending: admin.firestore.FieldValue.arrayRemove(userEmail),
         }),
-
       await db
         .collection(NEW_USERS_COLLECTION)
         .doc(userId)
@@ -380,7 +376,6 @@ export const removeUserFromClub = https.onRequest(async (req, res) => {
           clubs: admin.firestore.FieldValue.arrayRemove(clubId),
           notifications: admin.firestore.FieldValue.arrayRemove(clubId),
         }),
-
       await admin.messaging().unsubscribeFromTopic(token, clubId),
     ])
 

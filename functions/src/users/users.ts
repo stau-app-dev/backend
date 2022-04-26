@@ -54,11 +54,13 @@ export const getUser = https.onRequest(async (req, res) => {
 const addUserToDatabase = async (id: string, email: string, name: string) => {
   try {
     const status = email.includes(YCDSB_EMAIL) ? 1 : 0
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
     const newUserData = {
       badges: [],
       courses: [],
       clubs: [],
       email: email,
+      lastSubmittedSong: oneDayAgo,
       msgTokens: [],
       name: name,
       notifications: [],

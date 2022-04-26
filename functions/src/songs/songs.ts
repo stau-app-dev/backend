@@ -52,7 +52,12 @@ export const addSong = https.onRequest(async (req, res) => {
       upvotes: 0,
     } as Song
 
-    await db.collection(NEW_SONGS_COLLECTION).add(song)
+    await Promise.all([
+      await db.collection(NEW_SONGS_COLLECTION).add(song),
+      await db.collection('users').doc(creatorEmail).update({
+        lastSubmittedSong: new Date(),
+      }),
+    ])
 
     res.json({
       data: {
