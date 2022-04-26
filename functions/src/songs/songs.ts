@@ -44,6 +44,20 @@ export const addSong = https.onRequest(async (req, res) => {
       return
     }
 
+    const user = await db
+      .collection('users')
+      .where('email', '==', creatorEmail)
+      .get()
+    const lastSubmittedSong = user.docs[0].data().lastSubmittedSong as Date
+    const userId = user.docs[0].id
+
+    if (Date.now() - lastSubmittedSong.getTime() < 24 * 60 * 60 * 1000) {
+      res
+        .status(400)
+        .send({ error: 'You can only submit a song once every 24 hours' })
+      return
+    }
+
     const song = {
       artist,
       name,
@@ -54,7 +68,7 @@ export const addSong = https.onRequest(async (req, res) => {
 
     await Promise.all([
       await db.collection(NEW_SONGS_COLLECTION).add(song),
-      await db.collection('users').doc(creatorEmail).update({
+      await db.collection('users').doc(userId).update({
         lastSubmittedSong: new Date(),
       }),
     ])
