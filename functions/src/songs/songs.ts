@@ -1,7 +1,12 @@
 import { https } from 'firebase-functions'
 import { db } from '../admin'
-import { GENERIC_ERROR_MESSAGE, NEW_SONGS_COLLECTION } from '../data/consts'
+import {
+  GENERIC_ERROR_MESSAGE,
+  NEW_SONGS_COLLECTION,
+  NEW_USERS_COLLECTION,
+} from '../data/consts'
 import { Song } from '../models/songs'
+import { User } from '../models/users'
 
 export const getSongs = https.onRequest(async (req, res) => {
   try {
@@ -39,24 +44,40 @@ export const getSongs = https.onRequest(async (req, res) => {
 export const addSong = https.onRequest(async (req, res) => {
   try {
     const { artist, name, creatorEmail } = JSON.parse(req.body)
+    console.log('creatorEmail: ', creatorEmail)
     if (!artist || !name || !creatorEmail) {
       res.status(400).send({ error: 'Invalid parameters' })
       return
     }
 
-    const user = await db
-      .collection('users')
+    console.log('i get here')
+
+    const userDoc = await db
+      .collection(NEW_USERS_COLLECTION)
       .where('email', '==', creatorEmail)
       .get()
-    const lastSubmittedSong = user.docs[0].data().lastSubmittedSong as Date
-    const userId = user.docs[0].id
 
-    if (Date.now() - lastSubmittedSong.getTime() < 24 * 60 * 60 * 1000) {
+    if (userDoc.empty) {
+      res.status(404).send({ error: 'User not found' })
+      return
+    }
+    const userId = userDoc.docs[0].id
+    const user = userDoc.docs[0].data() as User
+    console.log('do u die at date')
+    const lastSubmittedSong = user.lastSubmittedSong as any
+
+    console.log('i get here 2')
+    console.log('lastSubmittedSong: ', lastSubmittedSong)
+    console.log(typeof lastSubmittedSong)
+
+    if (Date.now() - 24 * 60 * 60 * 1000 < lastSubmittedSong.toDate()) {
       res
         .status(400)
         .send({ error: 'You can only submit a song once every 24 hours' })
       return
     }
+
+    console.log('i get here 3')
 
     const song = {
       artist,
@@ -68,7 +89,7 @@ export const addSong = https.onRequest(async (req, res) => {
 
     await Promise.all([
       await db.collection(NEW_SONGS_COLLECTION).add(song),
-      await db.collection('users').doc(userId).update({
+      await db.collection(NEW_USERS_COLLECTION).doc(userId).update({
         lastSubmittedSong: new Date(),
       }),
     ])
@@ -81,6 +102,7 @@ export const addSong = https.onRequest(async (req, res) => {
     })
   } catch (error) {
     if (error instanceof Error) {
+      console.log('error: ', error.message)
       res.status(500).json({
         error: {
           message: error.message,
