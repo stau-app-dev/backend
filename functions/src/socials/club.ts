@@ -87,15 +87,13 @@ export const addClub = https.onRequest(async (req, res) => {
           pictureId,
           name,
         }),
-
       await db
         .collection(NEW_USERS_COLLECTION)
         .doc(userId)
         .update({
           clubs: admin.firestore.FieldValue.arrayUnion(clubAddRes.id),
-          notification: admin.firestore.FieldValue.arrayUnion(clubAddRes.id),
+          notifications: admin.firestore.FieldValue.arrayUnion(clubAddRes.id),
         }),
-
       await admin.messaging().subscribeToTopic(token, clubAddRes.id),
     ])
 

@@ -29,3 +29,6 @@ export const NEW_CLUBS_QUICK_ACCESS_COLLECTION = 'newClubsQuickAccess'
 export const NEW_SONGS_COLLECTION = 'newSongs'
 export const NEW_SPIRIT_METERS_COLLECTION = 'newSpiritMeters'
 export const NEW_USERS_COLLECTION = 'newUsers'
+
+// TOPICS
+export const GENERAL_TOPIC = 'newGeneral'

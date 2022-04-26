@@ -3,6 +3,7 @@ export interface User {
   courses: string[]
   clubs: string[]
   email: string
+  lastSubmittedSong: Date
   msgTokens: string[]
   name: string
   notifications: string[]
