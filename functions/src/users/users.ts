@@ -1,5 +1,5 @@
 import { https } from 'firebase-functions'
-import { db } from '../admin'
+import { db, cors } from '../admin'
 import {
   GENERIC_ERROR_MESSAGE,
   NEW_USERS_COLLECTION,
@@ -8,47 +8,49 @@ import {
 import { User } from '../models/users'
 
 export const getUser = https.onRequest(async (req, res) => {
-  try {
-    const { id, email, name } = req.query
-    if (
-      typeof id != 'string' ||
-      typeof email != 'string' ||
-      typeof name != 'string'
-    ) {
-      res.status(400).send({ error: 'Invalid parameters' })
-      return
-    }
+  cors(req, res, async () => {
+    try {
+      const { id, email, name } = req.query
+      if (
+        typeof id != 'string' ||
+        typeof email != 'string' ||
+        typeof name != 'string'
+      ) {
+        res.status(400).send({ error: 'Invalid parameters' })
+        return
+      }
 
-    let userDocs = await db.collection(NEW_USERS_COLLECTION).doc(id).get()
+      let userDocs = await db.collection(NEW_USERS_COLLECTION).doc(id).get()
 
-    if (!userDocs.exists) {
-      await addUserToDatabase(id, email, name)
-      userDocs = await db.collection(NEW_USERS_COLLECTION).doc(id).get()
-    }
+      if (!userDocs.exists) {
+        await addUserToDatabase(id, email, name)
+        userDocs = await db.collection(NEW_USERS_COLLECTION).doc(id).get()
+      }
 
-    res.send({
-      data: {
-        user: {
-          id,
-          ...userDocs.data(),
-        },
-      },
-    })
-  } catch (error) {
-    if (error instanceof Error) {
-      res.status(500).json({
-        error: {
-          message: error.message,
+      res.send({
+        data: {
+          user: {
+            id,
+            ...userDocs.data(),
+          },
         },
       })
-    } else {
-      res.status(500).json({
-        error: {
-          message: GENERIC_ERROR_MESSAGE,
-        },
-      })
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(500).json({
+          error: {
+            message: error.message,
+          },
+        })
+      } else {
+        res.status(500).json({
+          error: {
+            message: GENERIC_ERROR_MESSAGE,
+          },
+        })
+      }
     }
-  }
+  })
 })
 
 const addUserToDatabase = async (id: string, email: string, name: string) => {
