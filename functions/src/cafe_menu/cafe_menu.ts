@@ -1,5 +1,5 @@
 import { https } from 'firebase-functions'
-import { db, cors } from '../admin'
+import { db, cors, storage } from '../admin'
 import { GENERIC_ERROR_MESSAGE, NEW_CAFE_MENU_COLLECTION } from '../data/consts'
 import { CafeItem } from '../models/cafe_item'
 import { getSignedUrlFromFilePath } from '../storage'
@@ -164,6 +164,53 @@ export const deleteCafeMenuItem = https.onRequest(async (req, res) => {
         data: {
           message: 'Successfully deleted item!',
         },
+      })
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(500).json({
+          error: {
+            message: error.message,
+          },
+        })
+      } else {
+        res.status(500).json({
+          error: {
+            message: GENERIC_ERROR_MESSAGE,
+          },
+        })
+      }
+    }
+  })
+})
+
+export const getCafeMenuPictures = https.onRequest(async (req, res) => {
+  cors(req, res, async () => {
+    try {
+      const { limit } = req.query
+      if (!limit) {
+        res.status(400).send({ error: 'Invalid parameters' })
+        return
+      }
+
+      let itemsDocs
+
+      if (limit && Number(limit) > 0) {
+        itemsDocs = await storage.bucket().getFiles({
+          prefix: 'newCafeMenuItems/',
+          maxResults: Number(limit),
+        })
+      } else {
+        itemsDocs = await storage.bucket().getFiles({
+          prefix: 'newCafeMenuItems/',
+        })
+      }
+
+      const items: string[] = itemsDocs.map((doc) => {
+        return doc.name
+      })
+
+      res.json({
+        data: { message: 'Successfully retrieved pictures!', items },
       })
     } catch (error) {
       if (error instanceof Error) {
