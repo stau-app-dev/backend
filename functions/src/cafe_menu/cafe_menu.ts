@@ -1,8 +1,8 @@
 import { https } from 'firebase-functions'
-import { db, cors, storage } from '../admin'
+import { db, cors } from '../admin'
 import { GENERIC_ERROR_MESSAGE, NEW_CAFE_MENU_COLLECTION } from '../data/consts'
 import { CafeItem } from '../models/cafe_item'
-import { getSignedUrlFromFilePath } from '../storage'
+import { getFileNamesFromFolder, getSignedUrlFromFilePath } from '../storage'
 
 const capitalizeFirstLetter = (string: string) =>
   string.charAt(0).toUpperCase() + string.slice(1)
@@ -192,25 +192,14 @@ export const getCafeMenuPictures = https.onRequest(async (req, res) => {
         return
       }
 
-      let itemsDocs
-
-      if (limit && Number(limit) > 0) {
-        itemsDocs = await storage.bucket().getFiles({
-          prefix: 'newCafeMenuItems/',
-          maxResults: Number(limit),
-        })
-      } else {
-        itemsDocs = await storage.bucket().getFiles({
-          prefix: 'newCafeMenuItems/',
-        })
-      }
-
-      const items: string[] = itemsDocs.map((doc) => {
-        return doc.name
-      })
+      const limitParam = limit && Number(limit) > 0 ? Number(limit) : undefined
+      const fileNames = await getFileNamesFromFolder(
+        'newCafeMenuItems',
+        limitParam
+      )
 
       res.json({
-        data: items,
+        data: fileNames,
       })
     } catch (error) {
       if (error instanceof Error) {
