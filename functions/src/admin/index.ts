@@ -1,5 +1,6 @@
 import * as functions from 'firebase-functions'
 import * as admin from 'firebase-admin'
+import * as Cors from 'cors'
 
 admin.initializeApp(functions.config().firebase)
 export { admin }
@@ -12,3 +13,6 @@ export { auth }
 
 const storage = admin.storage()
 export { storage }
+
+const cors = Cors({ origin: true })
+export { cors }
