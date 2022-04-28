@@ -30,6 +30,7 @@ export const getCafeMenuItems = https.onRequest(async (req, res) => {
 
       const items: CafeItem[] = itemsDocs.docs.map((doc) => {
         return {
+          id: doc.id,
           ...doc.data(),
           pictureUrl: '',
         }
@@ -80,12 +81,12 @@ export const addCafeMenuItem = https.onRequest(async (req, res) => {
         todaysSpecial,
       }
 
-      await db.collection(NEW_CAFE_MENU_COLLECTION).add(item)
+      const ref = await db.collection(NEW_CAFE_MENU_COLLECTION).add(item)
 
       res.json({
         data: {
           message: 'Successfully added item!',
-          item: item,
+          item: { id: ref.id, ...item },
         },
       })
     } catch (error) {
@@ -126,7 +127,7 @@ export const updateCafeMenuItem = https.onRequest(async (req, res) => {
     res.json({
       data: {
         message: 'Successfully updated item!',
-        item: item,
+        item: { id, ...item },
       },
     })
   } catch (error) {
