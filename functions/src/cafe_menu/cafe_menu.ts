@@ -4,6 +4,9 @@ import { GENERIC_ERROR_MESSAGE, NEW_CAFE_MENU_COLLECTION } from '../data/consts'
 import { CafeItem } from '../models/cafe_item'
 import { getSignedUrlFromFilePath } from '../storage'
 
+const capitalizeFirstLetter = (string: string) =>
+  string.charAt(0).toUpperCase() + string.slice(1)
+
 export const getCafeMenuItems = https.onRequest(async (req, res) => {
   try {
     const { isTodaysSpecial, limit } = req.query
@@ -28,6 +31,7 @@ export const getCafeMenuItems = https.onRequest(async (req, res) => {
       return {
         ...doc.data(),
         pictureUrl: '',
+        id: doc.id,
       }
     }) as CafeItem[]
 
@@ -59,7 +63,6 @@ export const getCafeMenuItems = https.onRequest(async (req, res) => {
   }
 })
 
-// NOTE: Frontend tell user that it will be auto capitalized?
 export const addCafeMenuItem = https.onRequest(async (req, res) => {
   try {
     const { name, price, pictureId, todaysSpecial } = req.body
@@ -100,5 +103,74 @@ export const addCafeMenuItem = https.onRequest(async (req, res) => {
   }
 })
 
-const capitalizeFirstLetter = (string: string) =>
-  string.charAt(0).toUpperCase() + string.slice(1)
+export const updateCafeMenuItem = https.onRequest(async (req, res) => {
+  try {
+    const { id, name, price, pictureId, todaysSpecial } = req.body
+    if (!id || !name || !price || !pictureId || !todaysSpecial) {
+      res.status(400).send({ error: 'Invalid parameters' })
+      return
+    }
+
+    const item = {
+      name: capitalizeFirstLetter(name),
+      price,
+      pictureId,
+      todaysSpecial,
+    }
+
+    await db.collection(NEW_CAFE_MENU_COLLECTION).doc(id).update(item)
+
+    res.json({
+      data: {
+        message: 'Successfully updated item!',
+        item: item,
+      },
+    })
+  } catch (error) {
+    if (error instanceof Error) {
+      res.status(500).json({
+        error: {
+          message: error.message,
+        },
+      })
+    } else {
+      res.status(500).json({
+        error: {
+          message: GENERIC_ERROR_MESSAGE,
+        },
+      })
+    }
+  }
+})
+
+export const deleteCafeMenuItem = https.onRequest(async (req, res) => {
+  try {
+    const { id } = req.body
+    if (!id) {
+      res.status(400).send({ error: 'Invalid parameters' })
+      return
+    }
+
+    await db.collection(NEW_CAFE_MENU_COLLECTION).doc(id).delete()
+
+    res.json({
+      data: {
+        message: 'Successfully deleted item!',
+      },
+    })
+  } catch (error) {
+    if (error instanceof Error) {
+      res.status(500).json({
+        error: {
+          message: error.message,
+        },
+      })
+    } else {
+      res.status(500).json({
+        error: {
+          message: GENERIC_ERROR_MESSAGE,
+        },
+      })
+    }
+  }
+})
