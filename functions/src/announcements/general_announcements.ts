@@ -26,7 +26,7 @@ export const getGeneralAnnouncements = https.onRequest(async (req, res) => {
         announcements[0].toLowerCase().trim() === 'no announcements today')
     ) {
       res.json({
-        announcements: [],
+        data: [],
       })
       return
     }
