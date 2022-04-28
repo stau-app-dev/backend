@@ -108,73 +108,77 @@ export const addCafeMenuItem = https.onRequest(async (req, res) => {
 })
 
 export const updateCafeMenuItem = https.onRequest(async (req, res) => {
-  try {
-    const { id, name, price, pictureId, todaysSpecial } = req.body
-    if (!id || !name || !price || !pictureId || !todaysSpecial) {
-      res.status(400).send({ error: 'Invalid parameters' })
-      return
-    }
+  cors(req, res, async () => {
+    try {
+      const { id, name, price, pictureId, todaysSpecial } = req.body
+      if (!id || !name || !price || !pictureId || !todaysSpecial) {
+        res.status(400).send({ error: 'Invalid parameters' })
+        return
+      }
 
-    const item = {
-      name: capitalizeFirstLetter(name),
-      price,
-      pictureId,
-      todaysSpecial,
-    }
+      const item = {
+        name: capitalizeFirstLetter(name),
+        price,
+        pictureId,
+        todaysSpecial,
+      }
 
-    await db.collection(NEW_CAFE_MENU_COLLECTION).doc(id).update(item)
+      await db.collection(NEW_CAFE_MENU_COLLECTION).doc(id).update(item)
 
-    res.json({
-      data: {
-        message: 'Successfully updated item!',
-        item: { id, ...item },
-      },
-    })
-  } catch (error) {
-    if (error instanceof Error) {
-      res.status(500).json({
-        error: {
-          message: error.message,
+      res.json({
+        data: {
+          message: 'Successfully updated item!',
+          item: { id, ...item },
         },
       })
-    } else {
-      res.status(500).json({
-        error: {
-          message: GENERIC_ERROR_MESSAGE,
-        },
-      })
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(500).json({
+          error: {
+            message: error.message,
+          },
+        })
+      } else {
+        res.status(500).json({
+          error: {
+            message: GENERIC_ERROR_MESSAGE,
+          },
+        })
+      }
     }
-  }
+  })
 })
 
 export const deleteCafeMenuItem = https.onRequest(async (req, res) => {
-  try {
-    const { id } = req.body
-    if (!id) {
-      res.status(400).send({ error: 'Invalid parameters' })
-      return
-    }
+  cors(req, res, async () => {
+    try {
+      const { id } = req.body
+      if (!id) {
+        res.status(400).send({ error: 'Invalid parameters' })
+        return
+      }
 
-    await db.collection(NEW_CAFE_MENU_COLLECTION).doc(id).delete()
+      await db.collection(NEW_CAFE_MENU_COLLECTION).doc(id).delete()
 
-    res.json({
-      data: {
-        message: 'Successfully deleted item!',
-      },
-    })
-  } catch (error) {
-    if (error instanceof Error) {
-      res.status(500).json({
-        error: {
-          message: error.message,
+      res.json({
+        data: {
+          message: 'Successfully deleted item!',
         },
       })
-    } else {
-      res.status(500).json({
-        error: {
-          message: GENERIC_ERROR_MESSAGE,
-        },
-      })
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(500).json({
+          error: {
+            message: error.message,
+          },
+        })
+      } else {
+        res.status(500).json({
+          error: {
+            message: GENERIC_ERROR_MESSAGE,
+          },
+        })
+      }
     }
-  }
+  })
 })
