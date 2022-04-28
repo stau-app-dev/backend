@@ -210,7 +210,7 @@ export const getCafeMenuPictures = https.onRequest(async (req, res) => {
       })
 
       res.json({
-        data: { message: 'Successfully retrieved pictures!', items },
+        data: items,
       })
     } catch (error) {
       if (error instanceof Error) {
