@@ -18,6 +18,19 @@ export const getGeneralAnnouncements = https.onRequest(async (req, res) => {
       data.indexOf(endString)
     )
     const announcements = rawHTML.split(',')
+    console.log('announcements: ', announcements)
+
+    if (
+      announcements.length === 0 ||
+      (announcements.length === 1 &&
+        announcements[0].toLowerCase().trim() === 'no announcements today')
+    ) {
+      res.json({
+        announcements: [],
+      })
+      return
+    }
+
     const formatted: GeneralAnnouncement[] = announcements.map(
       (htmlAnnouncement) => {
         const announcement = decodeURIComponent(htmlAnnouncement)

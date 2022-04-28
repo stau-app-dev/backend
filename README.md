@@ -61,3 +61,11 @@ https://www.conventionalcommits.org/en/v1.0.0/#summary
 
 Be sure to check the GCP console to ensure your functions have the proper permissions!\
 Check the guidelines doc for more details on that. You may otherwise encounter an issue like 403 Forbidden.
+
+## Kill ports
+
+If you get an error saying ports are in use (basically if you crash), run the below command.
+
+```
+$ npx kill-port 4000 8080 8085
+```
