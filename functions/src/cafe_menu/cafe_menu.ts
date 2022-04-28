@@ -1,5 +1,5 @@
 import { https } from 'firebase-functions'
-import { db, cors } from '../admin'
+import { db, cors, storage } from '../admin'
 import { GENERIC_ERROR_MESSAGE, NEW_CAFE_MENU_COLLECTION } from '../data/consts'
 import { CafeItem } from '../models/cafe_item'
 import { getSignedUrlFromFilePath } from '../storage'
@@ -30,6 +30,7 @@ export const getCafeMenuItems = https.onRequest(async (req, res) => {
 
       const items: CafeItem[] = itemsDocs.docs.map((doc) => {
         return {
+          id: doc.id,
           ...doc.data(),
           pictureUrl: '',
         }
@@ -80,12 +81,12 @@ export const addCafeMenuItem = https.onRequest(async (req, res) => {
         todaysSpecial,
       }
 
-      await db.collection(NEW_CAFE_MENU_COLLECTION).add(item)
+      const ref = await db.collection(NEW_CAFE_MENU_COLLECTION).add(item)
 
       res.json({
         data: {
           message: 'Successfully added item!',
-          item: item,
+          item: { id: ref.id, ...item },
         },
       })
     } catch (error) {
@@ -107,73 +108,124 @@ export const addCafeMenuItem = https.onRequest(async (req, res) => {
 })
 
 export const updateCafeMenuItem = https.onRequest(async (req, res) => {
-  try {
-    const { id, name, price, pictureId, todaysSpecial } = req.body
-    if (!id || !name || !price || !pictureId || !todaysSpecial) {
-      res.status(400).send({ error: 'Invalid parameters' })
-      return
-    }
+  cors(req, res, async () => {
+    try {
+      const { id, name, price, pictureId, todaysSpecial } = req.body
+      if (!id || !name || !price || !pictureId || !todaysSpecial) {
+        res.status(400).send({ error: 'Invalid parameters' })
+        return
+      }
 
-    const item = {
-      name: capitalizeFirstLetter(name),
-      price,
-      pictureId,
-      todaysSpecial,
-    }
+      const item = {
+        name: capitalizeFirstLetter(name),
+        price,
+        pictureId,
+        todaysSpecial,
+      }
 
-    await db.collection(NEW_CAFE_MENU_COLLECTION).doc(id).update(item)
+      await db.collection(NEW_CAFE_MENU_COLLECTION).doc(id).update(item)
 
-    res.json({
-      data: {
-        message: 'Successfully updated item!',
-        item: item,
-      },
-    })
-  } catch (error) {
-    if (error instanceof Error) {
-      res.status(500).json({
-        error: {
-          message: error.message,
+      res.json({
+        data: {
+          message: 'Successfully updated item!',
+          item: { id, ...item },
         },
       })
-    } else {
-      res.status(500).json({
-        error: {
-          message: GENERIC_ERROR_MESSAGE,
-        },
-      })
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(500).json({
+          error: {
+            message: error.message,
+          },
+        })
+      } else {
+        res.status(500).json({
+          error: {
+            message: GENERIC_ERROR_MESSAGE,
+          },
+        })
+      }
     }
-  }
+  })
 })
 
 export const deleteCafeMenuItem = https.onRequest(async (req, res) => {
-  try {
-    const { id } = req.body
-    if (!id) {
-      res.status(400).send({ error: 'Invalid parameters' })
-      return
-    }
+  cors(req, res, async () => {
+    try {
+      const { id } = req.body
+      if (!id) {
+        res.status(400).send({ error: 'Invalid parameters' })
+        return
+      }
 
-    await db.collection(NEW_CAFE_MENU_COLLECTION).doc(id).delete()
+      await db.collection(NEW_CAFE_MENU_COLLECTION).doc(id).delete()
 
-    res.json({
-      data: {
-        message: 'Successfully deleted item!',
-      },
-    })
-  } catch (error) {
-    if (error instanceof Error) {
-      res.status(500).json({
-        error: {
-          message: error.message,
+      res.json({
+        data: {
+          message: 'Successfully deleted item!',
         },
       })
-    } else {
-      res.status(500).json({
-        error: {
-          message: GENERIC_ERROR_MESSAGE,
-        },
-      })
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(500).json({
+          error: {
+            message: error.message,
+          },
+        })
+      } else {
+        res.status(500).json({
+          error: {
+            message: GENERIC_ERROR_MESSAGE,
+          },
+        })
+      }
     }
-  }
+  })
+})
+
+export const getCafeMenuPictures = https.onRequest(async (req, res) => {
+  cors(req, res, async () => {
+    try {
+      const { limit } = req.query
+      if (!limit) {
+        res.status(400).send({ error: 'Invalid parameters' })
+        return
+      }
+
+      let itemsDocs
+
+      if (limit && Number(limit) > 0) {
+        itemsDocs = await storage.bucket().getFiles({
+          prefix: 'newCafeMenuItems/',
+          maxResults: Number(limit),
+        })
+      } else {
+        itemsDocs = await storage.bucket().getFiles({
+          prefix: 'newCafeMenuItems/',
+        })
+      }
+
+      const items: string[] = itemsDocs.map((doc) => {
+        return doc.name
+      })
+
+      res.json({
+        data: { message: 'Successfully retrieved pictures!', items },
+      })
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(500).json({
+          error: {
+            message: error.message,
+          },
+        })
+      } else {
+        res.status(500).json({
+          error: {
+            message: GENERIC_ERROR_MESSAGE,
+          },
+        })
+      }
+    }
+  })
 })
