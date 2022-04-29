@@ -1,5 +1,5 @@
 import { https } from 'firebase-functions'
-import { db } from '../admin'
+import { admin, db } from '../admin'
 import {
   GENERIC_ERROR_MESSAGE,
   NEW_SONGS_COLLECTION,
@@ -142,36 +142,20 @@ export const deleteSong = https.onRequest(async (req, res) => {
 export const upvoteSong = https.onRequest(async (req, res) => {
   try {
     const { songId, upvotes } = req.query
-    if (
-      !songId ||
-      typeof songId !== 'string' ||
-      !upvotes ||
-      typeof upvotes !== 'string'
-    ) {
+    if (typeof songId !== 'string' || typeof upvotes !== 'string') {
       res.status(400).send({ error: 'Invalid parameters' })
       return
     }
 
-    const songDoc = await db.collection(NEW_SONGS_COLLECTION).doc(songId).get()
+    const songDoc = db.collection(NEW_SONGS_COLLECTION).doc(songId)
 
-    if (!songDoc.exists) {
-      res.status(400).send({ error: 'Invalid parameters' })
-      return
-    }
-
-    const song = songDoc.data() as Song
-
-    await db
-      .collection(NEW_SONGS_COLLECTION)
-      .doc(songId)
-      .update({
-        upvotes: song.upvotes + parseInt(upvotes),
-      })
+    await songDoc.update({
+      upvotes: admin.firestore.FieldValue.increment(parseInt(upvotes)),
+    })
 
     res.json({
       data: {
         message: 'Successfully upvoted song!',
-        song: song,
       },
     })
   } catch (error) {
