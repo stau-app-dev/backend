@@ -76,7 +76,7 @@ export const addCafeMenuItem = https.onRequest(async (req, res) => {
 
       const item = {
         name: capitalizeFirstLetter(name),
-        price,
+        price: Number(price),
         pictureId,
         isTodaysSpecial,
       }
@@ -118,7 +118,7 @@ export const updateCafeMenuItem = https.onRequest(async (req, res) => {
 
       const item = {
         name: capitalizeFirstLetter(name),
-        price,
+        price: Number(price),
         pictureId,
         isTodaysSpecial,
       }
