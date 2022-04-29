@@ -68,8 +68,8 @@ export const getCafeMenuItems = https.onRequest(async (req, res) => {
 export const addCafeMenuItem = https.onRequest(async (req, res) => {
   cors(req, res, async () => {
     try {
-      const { name, price, pictureId, todaysSpecial } = req.body
-      if (!name || !price || !pictureId || !todaysSpecial) {
+      const { name, price, pictureId, isTodaysSpecial } = req.body
+      if (!name || !price || !pictureId || !isTodaysSpecial) {
         res.status(400).send({ error: 'Invalid parameters' })
         return
       }
@@ -78,7 +78,7 @@ export const addCafeMenuItem = https.onRequest(async (req, res) => {
         name: capitalizeFirstLetter(name),
         price,
         pictureId,
-        todaysSpecial,
+        isTodaysSpecial,
       }
 
       const ref = await db.collection(NEW_CAFE_MENU_COLLECTION).add(item)
@@ -110,8 +110,8 @@ export const addCafeMenuItem = https.onRequest(async (req, res) => {
 export const updateCafeMenuItem = https.onRequest(async (req, res) => {
   cors(req, res, async () => {
     try {
-      const { id, name, price, pictureId, todaysSpecial } = req.body
-      if (!id || !name || !price || !pictureId || !todaysSpecial) {
+      const { id, name, price, pictureId, isTodaysSpecial } = req.body
+      if (!id || !name || !price || !pictureId || !isTodaysSpecial) {
         res.status(400).send({ error: 'Invalid parameters' })
         return
       }
@@ -120,7 +120,7 @@ export const updateCafeMenuItem = https.onRequest(async (req, res) => {
         name: capitalizeFirstLetter(name),
         price,
         pictureId,
-        todaysSpecial,
+        isTodaysSpecial,
       }
 
       await db.collection(NEW_CAFE_MENU_COLLECTION).doc(id).update(item)
