@@ -78,7 +78,7 @@ export const addCafeMenuItem = https.onRequest(async (req, res) => {
         name: capitalizeFirstLetter(name),
         price: Number(price),
         pictureId,
-        isTodaysSpecial,
+        isTodaysSpecial: isTodaysSpecial === 'true',
       }
 
       const ref = await db.collection(NEW_CAFE_MENU_COLLECTION).add(item)
@@ -120,7 +120,7 @@ export const updateCafeMenuItem = https.onRequest(async (req, res) => {
         name: capitalizeFirstLetter(name),
         price: Number(price),
         pictureId,
-        isTodaysSpecial,
+        isTodaysSpecial: isTodaysSpecial === 'true',
       }
 
       await db.collection(NEW_CAFE_MENU_COLLECTION).doc(id).update(item)
