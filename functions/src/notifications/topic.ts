@@ -5,7 +5,7 @@ import { GENERAL_TOPIC, GENERIC_ERROR_MESSAGE } from '../data/consts'
 export const sendToGeneralTopic = https.onRequest(async (req, res) => {
   cors(req, res, async () => {
     try {
-      const { message } = JSON.parse(req.body)
+      const { message } = req.body
 
       if (typeof message !== 'string') {
         res.status(400).json({
@@ -23,11 +23,11 @@ export const sendToGeneralTopic = https.onRequest(async (req, res) => {
         },
       }
 
-      const response = await admin.messaging().sendToTopic(GENERAL_TOPIC, data)
+      await admin.messaging().sendToTopic(GENERAL_TOPIC, data)
 
       res.json({
         data: {
-          response,
+          message: 'Successfully sent announcement!',
         },
       })
     } catch (error) {
