@@ -6,7 +6,8 @@ admin.initializeApp(functions.config().firebase)
 export { admin }
 
 const firestore = admin.firestore()
-export { firestore as db }
+const client = new admin.firestore.v1.FirestoreAdminClient()
+export { firestore as db, client }
 
 const auth = admin.auth()
 export { auth }
