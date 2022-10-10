@@ -1,5 +1,5 @@
 import { https } from 'firebase-functions'
-import { admin, db } from '../admin'
+import { admin, db, cors } from '../admin'
 import {
   GENERIC_ERROR_MESSAGE,
   NEW_SONGS_COLLECTION,
@@ -9,36 +9,38 @@ import { Song } from '../models/songs'
 import { User } from '../models/users'
 
 export const getSongs = https.onRequest(async (req, res) => {
-  try {
-    const songDocs = await db
-      .collection(NEW_SONGS_COLLECTION)
-      .orderBy('upvotes', 'desc')
-      .get()
+  cors(req, res, async () => {
+    try {
+      const songDocs = await db
+        .collection(NEW_SONGS_COLLECTION)
+        .orderBy('upvotes', 'desc')
+        .get()
 
-    const songs: Song[] = songDocs.docs.map((doc) => {
-      var data = doc.data()
-      data.id = doc.id
-      return data as Song
-    }) as Song[]
+      const songs: Song[] = songDocs.docs.map((doc) => {
+        var data = doc.data()
+        data.id = doc.id
+        return data as Song
+      }) as Song[]
 
-    res.json({
-      data: songs,
-    })
-  } catch (error) {
-    if (error instanceof Error) {
-      res.status(500).json({
-        error: {
-          message: error.message,
-        },
+      res.json({
+        data: songs,
       })
-    } else {
-      res.status(500).json({
-        error: {
-          message: GENERIC_ERROR_MESSAGE,
-        },
-      })
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(500).json({
+          error: {
+            message: error.message,
+          },
+        })
+      } else {
+        res.status(500).json({
+          error: {
+            message: GENERIC_ERROR_MESSAGE,
+          },
+        })
+      }
     }
-  }
+  })
 })
 
 export const addSong = https.onRequest(async (req, res) => {
