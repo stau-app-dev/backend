@@ -8,13 +8,16 @@ import { backOff } from 'exponential-backoff'
 
 import * as admin from 'firebase-admin'
 
-export const dayNumberNotification = functions.pubsub.schedule('every day 08:30').timeZone('America/Toronto').onRun((context) => {  
+export const dayNumberNotification = functions.pubsub
+  .schedule('every day 08:30')
+  .timeZone('America/Toronto')
+  .onRun((context) => {
     const searchString = 'Day '
     let data: String
 
     try {
       data = backOff(async () => get(STA_DAY_NUMBER_SITE_URL)).toString()
-      logger.log('Fetched day number data: '+data);
+      logger.log('Fetched day number data: ' + data)
     } catch (error) {
       logger.error('Error getting day number data: ' + error)
       return
@@ -26,6 +29,8 @@ export const dayNumberNotification = functions.pubsub.schedule('every day 08:30'
         data.lastIndexOf(searchString) + searchString.length + 1
       )
     )
+
+    if (!dayNumber) return
 
     const notif = {
       notification: {
@@ -41,4 +46,3 @@ export const dayNumberNotification = functions.pubsub.schedule('every day 08:30'
       logger.error('Error sending Day Number Notifications: ' + error)
     }
   })
-
