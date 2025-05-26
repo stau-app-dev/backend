@@ -5,58 +5,61 @@ import {
   STA_ANNOUNCEMENT_SITE_URL,
 } from '../data/consts'
 import { GeneralAnnouncement } from '../models/announcements'
+import { cors } from '../admin'
 
 // NOTE: The site uses script injection, can't use cheerio or similar
 export const getGeneralAnnouncements = https.onRequest(async (req, res) => {
-  const startString = 'ancmnt = "'
-  const endString = '".split(",");'
-  const splitString = '$%-%$'
-  try {
-    const data: string = await get(STA_ANNOUNCEMENT_SITE_URL)
-    const rawHTML = data.substring(
-      data.indexOf(startString) + startString.length,
-      data.indexOf(endString)
-    )
-    const announcements = rawHTML.split(',')
-    console.log('announcements: ', announcements)
+  cors(req, res, async () => {
+    const startString = 'ancmnt = "'
+    const endString = '".split(",");'
+    const splitString = '$%-%$'
+    try {
+      const data: string = await get(STA_ANNOUNCEMENT_SITE_URL)
+      const rawHTML = data.substring(
+        data.indexOf(startString) + startString.length,
+        data.indexOf(endString)
+      )
+      const announcements = rawHTML.split(',')
+      console.log('announcements: ', announcements)
 
-    if (
-      announcements.length === 0 ||
-      (announcements.length === 1 &&
-        announcements[0].toLowerCase().trim() === 'no announcements today')
-    ) {
-      res.json({
-        data: [],
-      })
-      return
-    }
-
-    const formatted: GeneralAnnouncement[] = announcements.map(
-      (htmlAnnouncement) => {
-        const announcement = decodeURIComponent(htmlAnnouncement)
-        const [title, content] = announcement.split(splitString)
-        return {
-          title: title.trim(),
-          content: content.trim(),
-        }
+      if (
+        announcements.length === 0 ||
+        (announcements.length === 1 &&
+          announcements[0].toLowerCase().trim() === 'no announcements today')
+      ) {
+        res.json({
+          data: [],
+        })
+        return
       }
-    )
-    res.json({
-      data: formatted,
-    })
-  } catch (error) {
-    if (error instanceof Error) {
-      res.status(500).json({
-        error: {
-          message: error.message,
-        },
+
+      const formatted: GeneralAnnouncement[] = announcements.map(
+        (htmlAnnouncement) => {
+          const announcement = decodeURIComponent(htmlAnnouncement)
+          const [title, content] = announcement.split(splitString)
+          return {
+            title: title.trim(),
+            content: content.trim(),
+          }
+        }
+      )
+      res.json({
+        data: formatted,
       })
-    } else {
-      res.status(500).json({
-        error: {
-          message: GENERIC_ERROR_MESSAGE,
-        },
-      })
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(500).json({
+          error: {
+            message: error.message,
+          },
+        })
+      } else {
+        res.status(500).json({
+          error: {
+            message: GENERIC_ERROR_MESSAGE,
+          },
+        })
+      }
     }
-  }
+  })
 })

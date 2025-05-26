@@ -1,5 +1,5 @@
 import { https } from 'firebase-functions'
-import { db } from '../admin'
+import { db, cors } from '../admin'
 import {
   GENERIC_ERROR_MESSAGE,
   NEW_SPIRIT_METERS_COLLECTION,
@@ -7,29 +7,31 @@ import {
 import { SpiritMeters } from '../models/home'
 
 export const getSpiritMeters = https.onRequest(async (req, res) => {
-  try {
-    const spiritMetersDoc = await db
-      .collection(NEW_SPIRIT_METERS_COLLECTION)
-      .doc('spiritMeters')
-      .get()
+  cors(req, res, async () => {
+    try {
+      const spiritMetersDoc = await db
+        .collection(NEW_SPIRIT_METERS_COLLECTION)
+        .doc('spiritMeters')
+        .get()
 
-    const spiritMeters: SpiritMeters = spiritMetersDoc.data() as SpiritMeters
-    res.json({
-      data: spiritMeters,
-    })
-  } catch (error) {
-    if (error instanceof Error) {
-      res.status(500).json({
-        error: {
-          message: error.message,
-        },
+      const spiritMeters: SpiritMeters = spiritMetersDoc.data() as SpiritMeters
+      res.json({
+        data: spiritMeters,
       })
-    } else {
-      res.status(500).json({
-        error: {
-          message: GENERIC_ERROR_MESSAGE,
-        },
-      })
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(500).json({
+          error: {
+            message: error.message,
+          },
+        })
+      } else {
+        res.status(500).json({
+          error: {
+            message: GENERIC_ERROR_MESSAGE,
+          },
+        })
+      }
     }
-  }
+  })
 })
