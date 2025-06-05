@@ -12,7 +12,12 @@ export const getGeneralAnnouncements = https.onRequest(async (req, res) => {
   const endString = '".split(",");'
   const splitString = '$%-%$'
   try {
-    const data: string = await get(STA_ANNOUNCEMENT_SITE_URL)
+    const data: string = await get({
+      uri: STA_ANNOUNCEMENT_SITE_URL,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/114.0'
+      }
+    })
     const rawHTML = data.substring(
       data.indexOf(startString) + startString.length,
       data.indexOf(endString)
