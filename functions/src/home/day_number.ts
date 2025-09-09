@@ -4,8 +4,26 @@ import * as cors from 'cors'
 import { GENERIC_ERROR_MESSAGE, STA_DAY_NUMBER_SITE_URL } from '../data/consts'
 import { DayNumber } from '../models/home'
 
-// Allow requests only from your domain
-const corsHandler = cors({ origin: 'https://staugustinechs.ca' })
+const corsHandler = cors({
+  origin: (origin, callback) => {
+    if (!origin) {
+      return callback(null, true) // server-to-server, curl, etc.
+    }
+
+    // Allow production domain
+    if (origin === 'https://staugustinechs.ca') {
+      return callback(null, true)
+    }
+
+    // Allow any localhost (any port)
+    if (origin.startsWith('http://localhost')) {
+      return callback(null, true)
+    }
+
+    // Otherwise block
+    return callback(new Error(`CORS not allowed for origin: ${origin}`))
+  }
+})
 
 export const getDayNumber = https.onRequest((req, res) => {
   corsHandler(req, res, async () => {
@@ -14,7 +32,8 @@ export const getDayNumber = https.onRequest((req, res) => {
       const data: string = await get({
         uri: STA_DAY_NUMBER_SITE_URL,
         headers: {
-          'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/114.0'
+          'User-Agent':
+            'Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/114.0'
         }
       })
 
@@ -25,7 +44,8 @@ export const getDayNumber = https.onRequest((req, res) => {
         )
       )
 
-      res.set('Access-Control-Allow-Origin', 'https://staugustinechs.ca')
+      // Echo back the calling origin (needed if you allow multiple origins)
+      res.set('Access-Control-Allow-Origin', req.headers.origin || '')
       res.json({ data: { dayNumber } })
     } catch (error) {
       if (error instanceof Error) {
