@@ -5,7 +5,7 @@ import { load } from 'cheerio'
 import { VerseOfDay } from '../models/home'
 import * as cors from 'cors'
 
-// CORS config – allow prod site + localhost (any port)
+// CORS config – allow prod + localhost testing
 const corsHandler = cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true)
@@ -26,7 +26,14 @@ export const getVerseOfDay = https.onRequest((req, res) => {
     try {
       const data: string = await get(BIBLE_GATEWAY_SITE_URL)
       const $ = load(data)
-      const verseOfDay: VerseOfDay['verseOfDay'] = $('#verse-text').text()
+
+      const verseText = $('#verse-text').text().trim()
+      const citation = $('span.citation').first().text().trim()
+
+      // Combine into one string for the frontend (no changes needed there)
+      const verseOfDay: VerseOfDay['verseOfDay'] = citation
+        ? `${verseText} — ${citation}`
+        : verseText
 
       res.json({
         data: {
