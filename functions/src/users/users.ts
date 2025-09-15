@@ -70,6 +70,8 @@ const addUserToDatabase = async (id: string, email: string, name: string) => {
       showBadges: true,
       showCourses: true,
       status: status,
+      songRequestCount: 1,
+      songUpvoteCount: 3,    
     } as User
     await db.collection(NEW_USERS_COLLECTION).doc(id).set(newUserData)
   } catch (error) {
@@ -126,4 +128,49 @@ export const updateUserField = https.onRequest(async (req, res) => {
       })
     }
   }
+})
+
+export const migrateUserFields = https.onRequest(async (req, res) => {
+  cors(req, res, async () => {
+    try {
+      const snapshot = await db.collection(NEW_USERS_COLLECTION).get()
+      const batch = db.batch()
+
+      snapshot.forEach((doc) => {
+        const data = doc.data()
+        const updates: Record<string, any> = {}
+
+        if (data.songRequestCount === undefined) {
+          updates.songRequestCount = 1
+        }
+        if (data.songUpvoteCount === undefined) {
+          updates.songUpvoteCount = 3
+        }
+
+        if (Object.keys(updates).length > 0) {
+          batch.update(doc.ref, updates)
+        }
+      })
+
+      await batch.commit()
+
+      res.send({
+        message: 'Migration completed successfully',
+      })
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(500).json({
+          error: {
+            message: error.message,
+          },
+        })
+      } else {
+        res.status(500).json({
+          error: {
+            message: GENERIC_ERROR_MESSAGE,
+          },
+        })
+      }
+    }
+  })
 })

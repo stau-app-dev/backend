@@ -11,4 +11,6 @@ export interface User {
   showBadges: boolean
   showCourses: boolean
   status: number
+  songRequestCount: number
+  songUpvoteCount: number
 }

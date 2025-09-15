@@ -176,3 +176,112 @@ export const upvoteSong = https.onRequest(async (req, res) => {
     }
   }
 })
+
+export const addSongNew = https.onRequest(async (req, res) => {
+  try {
+    const { artist, name, creatorEmail } = JSON.parse(req.body)
+    if (!artist || !name || !creatorEmail) {
+      res.status(400).send({ error: 'Invalid parameters' })
+      return
+    }
+
+    const userDoc = await db
+      .collection(NEW_USERS_COLLECTION)
+      .where('email', '==', creatorEmail)
+      .get()
+
+    if (userDoc.empty) {
+      res.status(404).send({ error: 'User not found' })
+      return
+    }
+
+    const userId = userDoc.docs[0].id
+    const user = userDoc.docs[0].data() as User
+
+    if (!user.songRequestCount || user.songRequestCount <= 0) {
+      res.status(400).send({ error: 'No song requests left' })
+      return
+    }
+
+    const song = {
+      artist,
+      name,
+      creatorEmail,
+      createdAt: new Date(),
+      upvotes: 0,
+    } as Song
+
+    await Promise.all([
+      db.collection(NEW_SONGS_COLLECTION).add(song),
+      db.collection(NEW_USERS_COLLECTION).doc(userId).update({
+        lastSubmittedSong: new Date(),
+        songRequestCount: admin.firestore.FieldValue.increment(-1),
+      }),
+    ])
+
+    res.json({
+      data: {
+        message: 'Successfully added song!',
+        song,
+      },
+    })
+  } catch (error) {
+    res.status(500).json({
+      error: {
+        message: error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE,
+      },
+    })
+  }
+})
+
+export const upvoteSongNew = https.onRequest(async (req, res) => {
+  try {
+    const { songId, userEmail } = JSON.parse(req.body)
+    if (!songId || !userEmail) {
+      res.status(400).send({ error: 'Invalid parameters' })
+      return
+    }
+
+    const userDoc = await db
+      .collection(NEW_USERS_COLLECTION)
+      .where('email', '==', userEmail)
+      .get()
+
+    if (userDoc.empty) {
+      res.status(404).send({ error: 'User not found' })
+      return
+    }
+
+    const userId = userDoc.docs[0].id
+    const user = userDoc.docs[0].data() as User
+
+    if (!user.songUpvoteCount || user.songUpvoteCount <= 0) {
+      res.status(400).send({ error: 'No upvotes left' })
+      return
+    }
+
+    const songDoc = db.collection(NEW_SONGS_COLLECTION).doc(songId)
+
+    await Promise.all([
+      songDoc.update({
+        upvotes: admin.firestore.FieldValue.increment(1),
+      }),
+      db.collection(NEW_USERS_COLLECTION).doc(userId).update({
+        songUpvoteCount: admin.firestore.FieldValue.increment(-1),
+      }),
+    ])
+
+    res.json({
+      data: {
+        message: 'Successfully upvoted song!',
+      },
+    })
+  } catch (error) {
+    res.status(500).json({
+      error: {
+        message: error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE,
+      },
+    })
+  }
+})
+
