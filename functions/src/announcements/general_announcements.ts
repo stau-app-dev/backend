@@ -75,3 +75,16 @@ export const getGeneralAnnouncements = https.onRequest((req, res) => {
     }
   })
 })
+
+export const getAnnouncementFormUrl = https.onRequest((req, res) => {
+  corsHandler(req, res, () => {
+    const formUrl =
+      'https://docs.google.com/forms/d/e/1FAIpQLSeZ7HIVHTsd5wMjx2heWPwXd92RDmtAhY4wcaK-Gj-7cLrWXA/viewform'
+
+    res.json({
+      data: {
+        formUrl,
+      },
+    })
+  })
+})
