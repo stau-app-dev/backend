@@ -43,7 +43,6 @@ export const getGeneralAnnouncements = https.onRequest((req, res) => {
       )
 
       const announcements = rawHTML.split(',')
-      console.log('announcements: ', announcements)
 
       if (
         announcements.length === 0 ||
@@ -51,6 +50,7 @@ export const getGeneralAnnouncements = https.onRequest((req, res) => {
           announcements[0].toLowerCase().trim() === 'no announcements today')
       ) {
         res.set('Access-Control-Allow-Origin', req.headers.origin || '')
+        res.set('Vary', 'Origin')
         res.json({ data: [] })
         return
       }
@@ -65,13 +65,14 @@ export const getGeneralAnnouncements = https.onRequest((req, res) => {
       })
 
       res.set('Access-Control-Allow-Origin', req.headers.origin || '')
+      res.set('Vary', 'Origin')
       res.json({ data: formatted })
     } catch (error) {
-      if (error instanceof Error) {
-        res.status(500).json({ error: { message: error.message } })
-      } else {
-        res.status(500).json({ error: { message: GENERIC_ERROR_MESSAGE } })
-      }
+      res.set('Access-Control-Allow-Origin', req.headers.origin || '')
+      res.set('Vary', 'Origin')
+      res.status(500).json({
+        error: { message: error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE },
+      })
     }
   })
 })
@@ -81,10 +82,10 @@ export const getAnnouncementFormUrl = https.onRequest((req, res) => {
     const formUrl =
       'https://docs.google.com/forms/d/e/1FAIpQLSeZ7HIVHTsd5wMjx2heWPwXd92RDmtAhY4wcaK-Gj-7cLrWXA/viewform'
 
+    res.set('Access-Control-Allow-Origin', req.headers.origin || '')
+    res.set('Vary', 'Origin')
     res.json({
-      data: {
-        formUrl,
-      },
+      data: { formUrl },
     })
   })
 })

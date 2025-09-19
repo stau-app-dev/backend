@@ -10,17 +10,23 @@ import * as cors from 'cors'
 // Reuse the same CORS config
 const corsHandler = cors({
   origin: (origin, callback) => {
-    if (!origin) return callback(null, true)
+    if (!origin) {
+      return callback(null, true) // server-to-server, curl, etc.
+    }
 
-    if (
-      origin === 'https://staugustinechs.ca' ||
-      origin.startsWith('http://localhost')
-    ) {
+    // Allow production domain
+    if (origin === 'https://staugustinechs.ca') {
       return callback(null, true)
     }
 
-    return callback(new Error('Not allowed by CORS'))
-  },
+    // Allow any localhost (any port)
+    if (origin.startsWith('http://localhost')) {
+      return callback(null, true)
+    }
+
+    // Otherwise block
+    return callback(new Error(`CORS not allowed for origin: ${origin}`))
+  }
 })
 
 export const getSpiritMeters = https.onRequest((req, res) => {
@@ -33,23 +39,19 @@ export const getSpiritMeters = https.onRequest((req, res) => {
 
       const spiritMeters: SpiritMeters = spiritMetersDoc.data() as SpiritMeters
 
+      // Add explicit CORS headers
+      res.set('Access-Control-Allow-Origin', req.headers.origin || '')
+      res.set('Vary', 'Origin')
+
       res.json({
         data: spiritMeters,
       })
     } catch (error) {
-      if (error instanceof Error) {
-        res.status(500).json({
-          error: {
-            message: error.message,
-          },
-        })
-      } else {
-        res.status(500).json({
-          error: {
-            message: GENERIC_ERROR_MESSAGE,
-          },
-        })
-      }
+      res.status(500).json({
+        error: {
+          message: error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE,
+        },
+      })
     }
   })
 })

@@ -44,10 +44,13 @@ export const getDayNumber = https.onRequest((req, res) => {
         )
       )
 
-      // Echo back the calling origin (needed if you allow multiple origins)
+      // Always reflect back the calling origin
       res.set('Access-Control-Allow-Origin', req.headers.origin || '')
+      res.set('Vary', 'Origin')
       res.json({ data: { dayNumber } })
     } catch (error) {
+      res.set('Access-Control-Allow-Origin', req.headers.origin || '')
+      res.set('Vary', 'Origin')
       if (error instanceof Error) {
         res.status(500).json({ error: { message: error.message } })
       } else {
