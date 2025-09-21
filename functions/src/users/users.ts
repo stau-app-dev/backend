@@ -1,4 +1,5 @@
 import { https } from 'firebase-functions'
+import { pubsub } from 'firebase-functions'
 import { db } from '../admin'
 import {
   GENERIC_ERROR_MESSAGE,
@@ -154,39 +155,36 @@ export const updateUserField = https.onRequest((req, res) => {
 })
 
 // ------------------------------
-// Migrate User Fields
+// Resetting songRequestCount = 1 and songUpvoteCount = 3
+// So that a new week of requesting and upvoting can begin
 // ------------------------------
-export const migrateUserFields = https.onRequest((req, res) => {
-  corsHandler(req, res, async () => {
+// Run every Sunday at 2:50 AM Toronto time
+export const resetUserSongStuff = pubsub
+  .schedule('50 2 * * 0') // minute=30, hour=2, day-of-week=0 (Sunday)
+  .timeZone('America/Toronto')
+  .onRun(async () => {
     try {
       const snapshot = await db.collection(NEW_USERS_COLLECTION).get()
       const batch = db.batch()
 
       snapshot.forEach((doc) => {
-        const data = doc.data()
-        const updates: Record<string, any> = {}
-
-        if (data.songRequestCount === undefined) {
-          updates.songRequestCount = 1
-        }
-        if (data.songUpvoteCount === undefined) {
-          updates.songUpvoteCount = 3
-        }
-
-        if (Object.keys(updates).length > 0) {
-          batch.update(doc.ref, updates)
-        }
+        batch.update(doc.ref, {
+          songRequestCount: 1,
+          songUpvoteCount: 3,
+        })
       })
 
-      await batch.commit()
-
-      sendJson(req, res, 200, {
-        message: 'Migration completed successfully',
-      })
+      if (!snapshot.empty) {
+        await batch.commit()
+        console.log(`resetUserSongStuff: Reset ${snapshot.size} users`)
+      } else {
+        console.log('resetUserSongStuff: No users found')
+      }
     } catch (error) {
-      sendJson(req, res, 500, {
-        error: { message: error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE },
-      })
+      console.error(
+        'resetUserSongStuff failed',
+        error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE
+      )
     }
+    return null
   })
-})

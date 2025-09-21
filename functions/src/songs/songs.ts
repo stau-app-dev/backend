@@ -1,4 +1,5 @@
 import { https } from 'firebase-functions'
+import { pubsub } from 'firebase-functions' // add this import if not already at the top
 import { admin, db } from '../admin'
 import {
   GENERIC_ERROR_MESSAGE,
@@ -69,68 +70,6 @@ export const getSongs = https.onRequest((req, res) => {
   })
 })
 
-// ------------------------------
-// Add Song
-// ------------------------------
-export const addSong = https.onRequest((req, res) => {
-  corsHandler(req, res, async () => {
-    try {
-      const { artist, name, creatorEmail } = JSON.parse(req.body)
-
-      if (!artist || !name || !creatorEmail) {
-        sendJson(req, res, 400, { error: 'Invalid parameters' })
-        return
-      }
-
-      if (containsProfanity(artist) || containsProfanity(name)) {
-        sendJson(req, res, 400, { error: 'Profanity not allowed in song name or artist' })
-        return
-      }
-
-      const userDoc = await db
-        .collection(NEW_USERS_COLLECTION)
-        .where('email', '==', creatorEmail)
-        .get()
-
-      if (userDoc.empty) {
-        sendJson(req, res, 404, { error: 'User not found' })
-        return
-      }
-
-      const userId = userDoc.docs[0].id
-      const user = userDoc.docs[0].data() as User
-      const lastSubmittedSong = user.lastSubmittedSong as any
-
-      if (Date.now() - 24 * 60 * 60 * 1000 < lastSubmittedSong.toDate()) {
-        sendJson(req, res, 400, {
-          error: 'You can only submit a song once every 24 hours',
-        })
-        return
-      }
-
-      const song: Song = {
-        artist,
-        name,
-        creatorEmail,
-        createdAt: new Date(),
-        upvotes: 0,
-      }
-
-      await Promise.all([
-        db.collection(NEW_SONGS_COLLECTION).add(song),
-        db.collection(NEW_USERS_COLLECTION).doc(userId).update({
-          lastSubmittedSong: new Date(),
-        }),
-      ])
-
-      sendJson(req, res, 200, { data: { message: 'Successfully added song!', song } })
-    } catch (error) {
-      sendJson(req, res, 500, {
-        error: { message: error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE },
-      })
-    }
-  })
-})
 
 // ------------------------------
 // Delete Song
@@ -154,31 +93,7 @@ export const deleteSong = https.onRequest((req, res) => {
   })
 })
 
-// ------------------------------
-// Upvote Song
-// ------------------------------
-export const upvoteSong = https.onRequest((req, res) => {
-  corsHandler(req, res, async () => {
-    try {
-      const { songId, upvotes } = req.query
-      if (typeof songId !== 'string' || typeof upvotes !== 'string') {
-        sendJson(req, res, 400, { error: 'Invalid parameters' })
-        return
-      }
 
-      const songDoc = db.collection(NEW_SONGS_COLLECTION).doc(songId)
-      await songDoc.update({
-        upvotes: admin.firestore.FieldValue.increment(parseInt(upvotes)),
-      })
-
-      sendJson(req, res, 200, { data: { message: 'Successfully upvoted song!' } })
-    } catch (error) {
-      sendJson(req, res, 500, {
-        error: { message: error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE },
-      })
-    }
-  })
-})
 
 // ------------------------------
 // Add Song (New Version)
@@ -285,5 +200,58 @@ export const upvoteSongNew = https.onRequest((req, res) => {
         error: { message: error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE },
       })
     }
+  })
+})
+
+// ------------------------------
+// Delete All Songs (scheduled)
+// So that a new week of voting can begin
+// ------------------------------
+export const deleteAllSongs = pubsub
+  .schedule('40 2 * * 0') // Every Sunday at 2:40 AM
+  .timeZone('America/Toronto')
+  .onRun(async () => {
+    try {
+      const snapshot = await db.collection(NEW_SONGS_COLLECTION).get()
+      const batch = db.batch()
+
+      snapshot.forEach((doc) => {
+        batch.delete(doc.ref)
+      })
+
+      if (!snapshot.empty) {
+        await batch.commit()
+        console.log(`deleteAllSongs: Deleted ${snapshot.size} songs.`)
+      } else {
+        console.log('deleteAllSongs: No songs to delete.')
+      }
+    } catch (error) {
+      console.error(
+        'deleteAllSongs failed',
+        error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE
+      )
+    }
+    return null
+  })
+
+// ------------------------------
+// Deprecated addSong
+// ------------------------------
+export const addSong = https.onRequest((req, res) => {
+  corsHandler(req, res, () => {
+    sendJson(req, res, 200, {
+      message: 'Download the new version of the app',
+    })
+  })
+})
+
+// ------------------------------
+// Deprecated upvoteSong
+// ------------------------------
+export const upvoteSong = https.onRequest((req, res) => {
+  corsHandler(req, res, () => {
+    sendJson(req, res, 200, {
+      message: 'Download the new version of the app',
+    })
   })
 })
