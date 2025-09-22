@@ -70,74 +70,15 @@ const profaneWords: string[] = [
   'wetback*', 'wichser', 'wop*', 'yed', 'zabourah',
 ];
 
-// Character substitutions
-const leetMap: Record<string, string> = {
-  '@': 'a',
-  '0': 'o',
-  '1': 'i',
-  '3': 'e',
-  '4': 'a',
-  '5': 's',
-  '7': 't',
-  '8': 'b',
-  '9': 'g',
-  '!': 'i',
-  '|': 'i',
-  '+': 't',
-};
-
-// Normalize string like Flutter version
-function normalizeForProfanity(input: string): string {
-  if (!input) return '';
-  let buf = '';
-  const s = input.toLowerCase();
-  for (let i = 0; i < s.length; i++) {
-    const ch = s[i];
-    const rep = leetMap[ch];
-    if (rep) {
-      buf += rep;
-      continue;
-    }
-    const code = ch.charCodeAt(0);
-    const isAlpha = code >= 97 && code <= 122;
-    const isDigit = code >= 48 && code <= 57;
-    if (isAlpha || isDigit) {
-      buf += ch;
-      continue;
-    }
-    if (['_', '-', '.', '/', '\\'].includes(ch)) {
-      buf += ' ';
-      continue;
-    }
-    if (ch.trim() === '') {
-      buf += ' ';
-      continue;
-    }
-    // drop everything else
-  }
-  return buf.replace(/\s+/g, ' ').trim();
-}
-
-// Cache regex
-const regexCache: Record<string, RegExp | null> = {};
-
-function buildProfanityPattern(word: string): RegExp | null {
-  const w = normalizeForProfanity(word.trim());
-  if (!w) return null;
-  const parts = w.split(/\s+/).map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-  const core = parts.join('\\s+');
-  return new RegExp(`(^|[^a-z0-9])${core}([^a-z0-9]|$)`, 'i');
-}
-
 export function containsProfanity(input: string): boolean {
   if (!input.trim()) return false;
-  const text = normalizeForProfanity(input);
+
+  const lowerInput = input.toLowerCase();
   for (const w of profaneWords) {
-    if (!regexCache[w]) {
-      regexCache[w] = buildProfanityPattern(w);
+    if (!w) continue;
+    if (lowerInput.includes(w.toLowerCase())) {
+      return true;
     }
-    const re = regexCache[w];
-    if (re && re.test(text)) return true;
   }
   return false;
 }
