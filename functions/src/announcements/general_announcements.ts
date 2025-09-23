@@ -6,6 +6,7 @@ import {
   STA_ANNOUNCEMENT_SITE_URL,
 } from '../data/consts'
 import { GeneralAnnouncement } from '../models/announcements'
+import { db } from '../admin'
 
 // Shared CORS config
 const corsHandler = cors({
@@ -20,7 +21,7 @@ const corsHandler = cors({
       return callback(null, true)
     }
     return callback(new Error(`CORS not allowed for origin: ${origin}`))
-  }
+  },
 })
 
 export const getGeneralAnnouncements = https.onRequest((req, res) => {
@@ -33,8 +34,9 @@ export const getGeneralAnnouncements = https.onRequest((req, res) => {
       const data: string = await get({
         uri: STA_ANNOUNCEMENT_SITE_URL,
         headers: {
-          'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/114.0'
-        }
+          'User-Agent':
+            'Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/114.0',
+        },
       })
 
       const rawHTML = data.substring(
@@ -55,9 +57,42 @@ export const getGeneralAnnouncements = https.onRequest((req, res) => {
         return
       }
 
-      const formatted: GeneralAnnouncement[] = announcements.map((htmlAnnouncement) => {
-        const announcement = decodeURIComponent(htmlAnnouncement)
-        const [title, content] = announcement.split(splitString)
+      const formatted: GeneralAnnouncement[] = announcements.map(
+        (htmlAnnouncement) => {
+          const announcement = decodeURIComponent(htmlAnnouncement)
+          const [title, content] = announcement.split(splitString)
+          return {
+            title: title.trim(),
+            content: content.trim(),
+          }
+        }
+      )
+
+      res.set('Access-Control-Allow-Origin', req.headers.origin || '')
+      res.set('Vary', 'Origin')
+      res.json({ data: formatted })
+    } catch (error) {
+      res.set('Access-Control-Allow-Origin', req.headers.origin || '')
+      res.set('Vary', 'Origin')
+      res.status(500).json({
+        error: {
+          message:
+            error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE,
+        },
+      })
+    }
+  })
+})
+
+export const getGeneralAnnouncementsNew = https.onRequest((req, res) => {
+  corsHandler(req, res, async () => {
+    try {
+      const snapshot = await db.collection('newGeneralAnnouncements').get()
+
+      const formatted: GeneralAnnouncement[] = snapshot.docs.map((doc) => {
+        const data = doc.data() as { title?: unknown; content?: unknown }
+        const title = typeof data.title === 'string' ? data.title : ''
+        const content = typeof data.content === 'string' ? data.content : ''
         return {
           title: title.trim(),
           content: content.trim(),
@@ -71,7 +106,10 @@ export const getGeneralAnnouncements = https.onRequest((req, res) => {
       res.set('Access-Control-Allow-Origin', req.headers.origin || '')
       res.set('Vary', 'Origin')
       res.status(500).json({
-        error: { message: error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE },
+        error: {
+          message:
+            error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE,
+        },
       })
     }
   })
