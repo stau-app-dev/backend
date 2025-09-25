@@ -74,6 +74,61 @@ export const getSongs = https.onRequest((req, res) => {
 })
 
 // ------------------------------
+// Get Songs (New, Auth via UUID)
+// ------------------------------
+export const getSongsNew = https.onRequest((req, res) => {
+  corsHandler(req, res, async () => {
+    try {
+      let userUuid: string | undefined
+      if (req.method === 'GET') {
+        userUuid = (req.query.userUuid as string) || undefined
+      } else {
+        try {
+          const parsed = JSON.parse(req.body || '{}')
+          userUuid = parsed.userUuid
+        } catch {
+          // ignore parse errors; will fail validation below
+        }
+      }
+
+      if (!userUuid) {
+        sendJson(req, res, 400, { error: 'userUuid required' })
+        return
+      }
+
+      const userSnap = await db
+        .collection(NEW_USERS_COLLECTION)
+        .doc(userUuid)
+        .get()
+      if (!userSnap.exists) {
+        sendJson(req, res, 404, { error: 'User not found' })
+        return
+      }
+
+      const songDocs = await db
+        .collection(NEW_SONGS_COLLECTION)
+        .orderBy('upvotes', 'desc')
+        .get()
+
+      const songs: Song[] = songDocs.docs.map((doc) => {
+        const data = doc.data()
+        data.id = doc.id
+        return data as Song
+      }) as Song[]
+
+      sendJson(req, res, 200, { data: songs })
+    } catch (error) {
+      sendJson(req, res, 500, {
+        error: {
+          message:
+            error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE,
+        },
+      })
+    }
+  })
+})
+
+// ------------------------------
 // Delete Song
 // ------------------------------
 export const deleteSong = https.onRequest((req, res) => {
@@ -86,6 +141,52 @@ export const deleteSong = https.onRequest((req, res) => {
       }
 
       await db.collection(NEW_SONGS_COLLECTION).doc(id).delete()
+      sendJson(req, res, 200, {
+        data: { message: 'Successfully deleted song!' },
+      })
+    } catch (error) {
+      sendJson(req, res, 500, {
+        error: {
+          message:
+            error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE,
+        },
+      })
+    }
+  })
+})
+
+// ------------------------------
+// Delete Song (New - Auth via UUID)
+// ------------------------------
+export const deleteSongNew = https.onRequest((req, res) => {
+  corsHandler(req, res, async () => {
+    try {
+      const { songId, userUuid } = JSON.parse(req.body || '{}')
+      if (!songId || !userUuid) {
+        sendJson(req, res, 400, { error: 'Invalid parameters' })
+        return
+      }
+
+      // Validate user exists
+      const userSnap = await db
+        .collection(NEW_USERS_COLLECTION)
+        .doc(userUuid)
+        .get()
+      if (!userSnap.exists) {
+        sendJson(req, res, 404, { error: 'User not found' })
+        return
+      }
+
+      const songRef = db.collection(NEW_SONGS_COLLECTION).doc(songId)
+      const songSnap = await songRef.get()
+      if (!songSnap.exists) {
+        sendJson(req, res, 404, { error: 'Song not found' })
+        return
+      }
+
+      // Ownership check intentionally removed: any authenticated user may delete a song.
+
+      await songRef.delete()
       sendJson(req, res, 200, {
         data: { message: 'Successfully deleted song!' },
       })
