@@ -64,12 +64,14 @@ export const getSongs = https.onRequest((req, res) => {
       sendJson(req, res, 200, { data: songs })
     } catch (error) {
       sendJson(req, res, 500, {
-        error: { message: error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE },
+        error: {
+          message:
+            error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE,
+        },
       })
     }
   })
 })
-
 
 // ------------------------------
 // Delete Song
@@ -84,16 +86,19 @@ export const deleteSong = https.onRequest((req, res) => {
       }
 
       await db.collection(NEW_SONGS_COLLECTION).doc(id).delete()
-      sendJson(req, res, 200, { data: { message: 'Successfully deleted song!' } })
+      sendJson(req, res, 200, {
+        data: { message: 'Successfully deleted song!' },
+      })
     } catch (error) {
       sendJson(req, res, 500, {
-        error: { message: error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE },
+        error: {
+          message:
+            error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE,
+        },
       })
     }
   })
 })
-
-
 
 // ------------------------------
 // Add Song (New Version)
@@ -101,31 +106,30 @@ export const deleteSong = https.onRequest((req, res) => {
 export const addSongNew = https.onRequest((req, res) => {
   corsHandler(req, res, async () => {
     try {
-      const { artist, name, creatorEmail } = JSON.parse(req.body)
+      const { artist, name, creatorUuid } = JSON.parse(req.body)
 
-      if (!artist || !name || !creatorEmail) {
+      if (!artist || !name || !creatorUuid) {
         sendJson(req, res, 400, { error: 'Invalid parameters' })
         return
       }
 
       if (containsProfanity(artist) || containsProfanity(name)) {
-        sendJson(req, res, 400, { error: 'Profanity not allowed in song name or artist' })
+        sendJson(req, res, 400, {
+          error: 'Profanity not allowed in song name or artist',
+        })
         return
       }
 
-      const userDoc = await db
+      const userSnap = await db
         .collection(NEW_USERS_COLLECTION)
-        .where('email', '==', creatorEmail)
+        .doc(creatorUuid)
         .get()
-
-      if (userDoc.empty) {
+      if (!userSnap.exists) {
         sendJson(req, res, 404, { error: 'User not found' })
         return
       }
 
-      const userId = userDoc.docs[0].id
-      const user = userDoc.docs[0].data() as User
-
+      const user = userSnap.data() as User
       if (!user.songRequestCount || user.songRequestCount <= 0) {
         sendJson(req, res, 400, { error: 'No song requests left' })
         return
@@ -134,23 +138,33 @@ export const addSongNew = https.onRequest((req, res) => {
       const song: Song = {
         artist,
         name,
-        creatorEmail,
+        creatorEmail: (user as any).email || '',
         createdAt: new Date(),
         upvotes: 0,
+        // @ts-ignore augmenting for internal reference
+        creatorUuid,
       }
 
       await Promise.all([
         db.collection(NEW_SONGS_COLLECTION).add(song),
-        db.collection(NEW_USERS_COLLECTION).doc(userId).update({
-          lastSubmittedSong: new Date(),
-          songRequestCount: admin.firestore.FieldValue.increment(-1),
-        }),
+        db
+          .collection(NEW_USERS_COLLECTION)
+          .doc(creatorUuid)
+          .update({
+            lastSubmittedSong: new Date(),
+            songRequestCount: admin.firestore.FieldValue.increment(-1),
+          }),
       ])
 
-      sendJson(req, res, 200, { data: { message: 'Successfully added song!', song } })
+      sendJson(req, res, 200, {
+        data: { message: 'Successfully added song!', song },
+      })
     } catch (error) {
       sendJson(req, res, 500, {
-        error: { message: error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE },
+        error: {
+          message:
+            error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE,
+        },
       })
     }
   })
@@ -162,25 +176,22 @@ export const addSongNew = https.onRequest((req, res) => {
 export const upvoteSongNew = https.onRequest((req, res) => {
   corsHandler(req, res, async () => {
     try {
-      const { songId, userEmail } = JSON.parse(req.body)
-      if (!songId || !userEmail) {
+      const { songId, userUuid } = JSON.parse(req.body)
+      if (!songId || !userUuid) {
         sendJson(req, res, 400, { error: 'Invalid parameters' })
         return
       }
 
-      const userDoc = await db
+      const userSnap = await db
         .collection(NEW_USERS_COLLECTION)
-        .where('email', '==', userEmail)
+        .doc(userUuid)
         .get()
-
-      if (userDoc.empty) {
+      if (!userSnap.exists) {
         sendJson(req, res, 404, { error: 'User not found' })
         return
       }
 
-      const userId = userDoc.docs[0].id
-      const user = userDoc.docs[0].data() as User
-
+      const user = userSnap.data() as User
       if (!user.songUpvoteCount || user.songUpvoteCount <= 0) {
         sendJson(req, res, 400, { error: 'No upvotes left' })
         return
@@ -189,15 +200,23 @@ export const upvoteSongNew = https.onRequest((req, res) => {
       const songDoc = db.collection(NEW_SONGS_COLLECTION).doc(songId)
       await Promise.all([
         songDoc.update({ upvotes: admin.firestore.FieldValue.increment(1) }),
-        db.collection(NEW_USERS_COLLECTION).doc(userId).update({
-          songUpvoteCount: admin.firestore.FieldValue.increment(-1),
-        }),
+        db
+          .collection(NEW_USERS_COLLECTION)
+          .doc(userUuid)
+          .update({
+            songUpvoteCount: admin.firestore.FieldValue.increment(-1),
+          }),
       ])
 
-      sendJson(req, res, 200, { data: { message: 'Successfully upvoted song!' } })
+      sendJson(req, res, 200, {
+        data: { message: 'Successfully upvoted song!' },
+      })
     } catch (error) {
       sendJson(req, res, 500, {
-        error: { message: error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE },
+        error: {
+          message:
+            error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE,
+        },
       })
     }
   })
