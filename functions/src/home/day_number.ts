@@ -64,22 +64,51 @@ export const getDayNumber = https.onRequest((req, res) => {
 export const getDayNumberNew = https.onRequest((req, res) => {
   corsHandler(req, res, async () => {
     try {
-      const docRef = db.collection('newDayNumber').doc('day12')
+      // Resolve the document ID (Date). Allow override via query/body; default to today's date in Toronto.
+      const dateFromQuery =
+        typeof req.query.date === 'string' && req.query.date.trim().length > 0
+          ? req.query.date.trim()
+          : undefined
+      const dateFromBody =
+        req.body &&
+        typeof req.body.date === 'string' &&
+        req.body.date.trim().length > 0
+          ? req.body.date.trim()
+          : undefined
+
+      const docId =
+        dateFromQuery ||
+        dateFromBody ||
+        new Date().toLocaleDateString('en-CA', {
+          timeZone: 'America/Toronto',
+        }) // YYYY-MM-DD
+
+      const docRef = db.collection('newDayOneTwo').doc(docId)
       const doc = await docRef.get()
 
       if (!doc.exists) {
-        throw new Error('Day number not found')
+        res.set('Access-Control-Allow-Origin', req.headers.origin || '')
+        res.set('Vary', 'Origin')
+        res.status(404).json({
+          error: { message: `Day number not found for date ${docId}` },
+        })
+        return
       }
 
-      const data = doc.data() as { dayNumber?: unknown } | undefined
-      const raw =
-        data && typeof data.dayNumber !== 'undefined' ? data.dayNumber : null
-      const dayNumber: DayNumber['dayNumber'] =
+      const data = doc.data() as { Day?: unknown; Date?: unknown } | undefined
+      const raw = data?.Day
+
+      const parsed =
         typeof raw === 'number'
           ? raw
-          : raw === null
+          : raw == null
           ? null
-          : parseInt(String(raw), 10)
+          : (() => {
+              const n = parseInt(String(raw), 10)
+              return Number.isNaN(n) ? null : n
+            })()
+
+      const dayNumber: DayNumber['dayNumber'] = parsed
 
       res.set('Access-Control-Allow-Origin', req.headers.origin || '')
       res.set('Vary', 'Origin')
