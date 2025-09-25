@@ -45,35 +45,6 @@ function sendJson(req: any, res: any, status: number, body: any) {
 }
 
 // ------------------------------
-// Get Songs
-// ------------------------------
-export const getSongs = https.onRequest((req, res) => {
-  corsHandler(req, res, async () => {
-    try {
-      const songDocs = await db
-        .collection(NEW_SONGS_COLLECTION)
-        .orderBy('upvotes', 'desc')
-        .get()
-
-      const songs: Song[] = songDocs.docs.map((doc) => {
-        const data = doc.data()
-        data.id = doc.id
-        return data as Song
-      }) as Song[]
-
-      sendJson(req, res, 200, { data: songs })
-    } catch (error) {
-      sendJson(req, res, 500, {
-        error: {
-          message:
-            error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE,
-        },
-      })
-    }
-  })
-})
-
-// ------------------------------
 // Get Songs (New, Auth via UUID)
 // ------------------------------
 export const getSongsNew = https.onRequest((req, res) => {
@@ -117,33 +88,6 @@ export const getSongsNew = https.onRequest((req, res) => {
       }) as Song[]
 
       sendJson(req, res, 200, { data: songs })
-    } catch (error) {
-      sendJson(req, res, 500, {
-        error: {
-          message:
-            error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE,
-        },
-      })
-    }
-  })
-})
-
-// ------------------------------
-// Delete Song
-// ------------------------------
-export const deleteSong = https.onRequest((req, res) => {
-  corsHandler(req, res, async () => {
-    try {
-      const { id } = JSON.parse(req.body)
-      if (!id) {
-        sendJson(req, res, 400, { error: 'Invalid parameters' })
-        return
-      }
-
-      await db.collection(NEW_SONGS_COLLECTION).doc(id).delete()
-      sendJson(req, res, 200, {
-        data: { message: 'Successfully deleted song!' },
-      })
     } catch (error) {
       sendJson(req, res, 500, {
         error: {
@@ -355,13 +299,29 @@ export const deleteAllSongs = pubsub
   })
 
 // ------------------------------
+// Deprecated getSongs
+// ------------------------------
+export const getSongs = https.onRequest((req, res) => {
+  corsHandler(req, res, () => {
+    sendJson(req, res, 200, { message: 'Download the new version of the app' })
+  })
+})
+
+// ------------------------------
+// Deprecated deleteSong
+// ------------------------------
+export const deleteSong = https.onRequest((req, res) => {
+  corsHandler(req, res, () => {
+    sendJson(req, res, 200, { message: 'Download the new version of the app' })
+  })
+})
+
+// ------------------------------
 // Deprecated addSong
 // ------------------------------
 export const addSong = https.onRequest((req, res) => {
   corsHandler(req, res, () => {
-    sendJson(req, res, 200, {
-      message: 'Download the new version of the app',
-    })
+    sendJson(req, res, 200, { message: 'Download the new version of the app' })
   })
 })
 
@@ -370,8 +330,6 @@ export const addSong = https.onRequest((req, res) => {
 // ------------------------------
 export const upvoteSong = https.onRequest((req, res) => {
   corsHandler(req, res, () => {
-    sendJson(req, res, 200, {
-      message: 'Download the new version of the app',
-    })
+    sendJson(req, res, 200, { message: 'Download the new version of the app' })
   })
 })
