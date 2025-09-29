@@ -8,6 +8,7 @@ import {
 } from '../data/consts'
 import { User } from '../models/users'
 import * as cors from 'cors'
+import { computeAndPersistBaseSpiritMeters } from '../home/spirit_meters'
 
 // ------------------------------
 // Centralized CORS Handler
@@ -42,7 +43,6 @@ function sendJson(req: any, res: any, status: number, body: any) {
   res.status(status).json(body)
 }
 
-
 // ------------------------------
 // Get User
 // ------------------------------
@@ -64,6 +64,15 @@ export const getUser = https.onRequest((req, res) => {
       if (!userDoc.exists) {
         await addUserToDatabase(id, email, name)
         userDoc = await db.collection(NEW_USERS_COLLECTION).doc(id).get()
+        // Update spirit meters since a new user just logged in for the first time
+        try {
+          await computeAndPersistBaseSpiritMeters()
+        } catch (e) {
+          console.warn(
+            'computeAndPersistBaseSpiritMeters failed after new user creation',
+            e
+          )
+        }
       }
 
       sendJson(req, res, 200, {
@@ -76,7 +85,10 @@ export const getUser = https.onRequest((req, res) => {
       })
     } catch (error) {
       sendJson(req, res, 500, {
-        error: { message: error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE },
+        error: {
+          message:
+            error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE,
+        },
       })
     }
   })
@@ -122,7 +134,11 @@ export const updateUserField = https.onRequest((req, res) => {
   corsHandler(req, res, async () => {
     try {
       const { id, field, value } = JSON.parse(req.body)
-      if (typeof id !== 'string' || typeof field !== 'string' || value === undefined) {
+      if (
+        typeof id !== 'string' ||
+        typeof field !== 'string' ||
+        value === undefined
+      ) {
         sendJson(req, res, 400, { error: 'Invalid parameters' })
         return
       }
@@ -133,9 +149,12 @@ export const updateUserField = https.onRequest((req, res) => {
         return
       }
 
-      await db.collection(NEW_USERS_COLLECTION).doc(id).update({
-        [field]: value,
-      })
+      await db
+        .collection(NEW_USERS_COLLECTION)
+        .doc(id)
+        .update({
+          [field]: value,
+        })
 
       sendJson(req, res, 200, {
         data: {
@@ -148,7 +167,10 @@ export const updateUserField = https.onRequest((req, res) => {
       })
     } catch (error) {
       sendJson(req, res, 500, {
-        error: { message: error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE },
+        error: {
+          message:
+            error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE,
+        },
       })
     }
   })

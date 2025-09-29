@@ -62,7 +62,7 @@ export const getSpiritMeters = https.onRequest((req, res) => {
 // ----------------------------------------------
 // Shared core: compute and persist base spirit meters
 // ----------------------------------------------
-async function computeAndPersistBaseSpiritMeters(): Promise<void> {
+export async function computeAndPersistBaseSpiritMeters(): Promise<void> {
   // School year end is next calendar year if current month >= September (8)
   const now = new Date()
   const month = now.getMonth() // 0-based
@@ -118,6 +118,11 @@ async function computeAndPersistBaseSpiritMeters(): Promise<void> {
       ten: normalized.ten,
       eleven: normalized.eleven,
       twelve: normalized.twelve,
+      // raw totals for visibility
+      nineTotal: counters.nine,
+      tenTotal: counters.ten,
+      elevenTotal: counters.eleven,
+      twelveTotal: counters.twelve,
     },
     { merge: true }
   )
