@@ -21,6 +21,10 @@ const corsHandler = cors({
       return callback(null, true)
     }
 
+    if (origin.endsWith('.app.github.dev')) {
+      return callback(null, true)
+    }
+
     // Allow any localhost (any port)
     if (origin.startsWith('http://localhost')) {
       return callback(null, true)

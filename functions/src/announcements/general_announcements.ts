@@ -17,6 +17,11 @@ const corsHandler = cors({
     if (origin === 'https://staugustinechs.ca') {
       return callback(null, true)
     }
+
+    if (origin.endsWith('.app.github.dev')) {
+      return callback(null, true)
+    }
+
     if (origin.startsWith('http://localhost')) {
       return callback(null, true)
     }

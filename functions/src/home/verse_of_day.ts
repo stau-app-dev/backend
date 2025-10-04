@@ -17,6 +17,10 @@ const corsHandler = cors({
       return callback(null, true)
     }
 
+    if (origin.endsWith('.app.github.dev')) {
+      return callback(null, true)
+    }
+
     // Allow any localhost (any port)
     if (origin.startsWith('http://localhost')) {
       return callback(null, true)
@@ -24,7 +28,7 @@ const corsHandler = cors({
 
     // Otherwise block
     return callback(new Error(`CORS not allowed for origin: ${origin}`))
-  }
+  },
 })
 
 export const getVerseOfDay = https.onRequest((req, res) => {
@@ -53,7 +57,8 @@ export const getVerseOfDay = https.onRequest((req, res) => {
     } catch (error) {
       res.status(500).json({
         error: {
-          message: error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE,
+          message:
+            error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE,
         },
       })
     }
