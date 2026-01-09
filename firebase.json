@@ -3,7 +3,8 @@
     "source": "functions",
     "predeploy": [
       "bash -c 'npm --prefix \"$RESOURCE_DIR\" run lint'",
-      "bash -c 'npm --prefix \"$RESOURCE_DIR\" run build'"    ]
+      "bash -c 'npm --prefix \"$RESOURCE_DIR\" run build'"
+    ]
   },
   "emulators": {
     "auth": {
