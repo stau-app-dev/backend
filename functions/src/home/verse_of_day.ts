@@ -1,4 +1,5 @@
 import { https } from 'firebase-functions'
+import { onRequest } from 'firebase-functions/v2/https'
 import { get } from 'request-promise'
 import { BIBLE_GATEWAY_SITE_URL, GENERIC_ERROR_MESSAGE } from '../data/consts'
 import { load } from 'cheerio'
@@ -46,6 +47,38 @@ export const getVerseOfDay = https.onRequest((req, res) => {
         : verseText
 
       // Explicitly set CORS headers (fix for Firefox iOS/WebKit)
+      res.set('Access-Control-Allow-Origin', req.headers.origin || '')
+      res.set('Vary', 'Origin')
+
+      res.json({
+        data: {
+          verseOfDay,
+        },
+      })
+    } catch (error) {
+      res.status(500).json({
+        error: {
+          message:
+            error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE,
+        },
+      })
+    }
+  })
+})
+
+export const getVerseOfDayG2 = onRequest((req, res) => {
+  corsHandler(req, res, async () => {
+    try {
+      const data: string = await get(BIBLE_GATEWAY_SITE_URL)
+      const $ = load(data)
+
+      const verseText = $('#verse-text').text().trim()
+      const citation = $('span.citation').first().text().trim()
+
+      const verseOfDay: VerseOfDay['verseOfDay'] = citation
+        ? `${verseText} — ${citation}`
+        : verseText
+
       res.set('Access-Control-Allow-Origin', req.headers.origin || '')
       res.set('Vary', 'Origin')
 

@@ -1,4 +1,5 @@
 import { https, pubsub } from 'firebase-functions'
+import { onRequest } from 'firebase-functions/v2/https'
 import { db } from '../admin'
 import {
   GENERIC_ERROR_MESSAGE,
@@ -46,6 +47,33 @@ export const getSpiritMeters = https.onRequest((req, res) => {
       const spiritMeters: SpiritMeters = spiritMetersDoc.data() as SpiritMeters
 
       // Add explicit CORS headers
+      res.set('Access-Control-Allow-Origin', req.headers.origin || '')
+      res.set('Vary', 'Origin')
+
+      res.json({
+        data: spiritMeters,
+      })
+    } catch (error) {
+      res.status(500).json({
+        error: {
+          message:
+            error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE,
+        },
+      })
+    }
+  })
+})
+
+export const getSpiritMetersG2 = onRequest((req, res) => {
+  corsHandler(req, res, async () => {
+    try {
+      const spiritMetersDoc = await db
+        .collection(NEW_SPIRIT_METERS_COLLECTION)
+        .doc('spiritMeters')
+        .get()
+
+      const spiritMeters: SpiritMeters = spiritMetersDoc.data() as SpiritMeters
+
       res.set('Access-Control-Allow-Origin', req.headers.origin || '')
       res.set('Vary', 'Origin')
 
