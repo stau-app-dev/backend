@@ -1,5 +1,6 @@
 import { https, pubsub } from 'firebase-functions'
 import { onRequest } from 'firebase-functions/v2/https'
+import { onSchedule } from 'firebase-functions/v2/scheduler'
 import { db } from '../admin'
 import {
   GENERIC_ERROR_MESSAGE,
@@ -204,3 +205,22 @@ export const updateBaseSpiritMetersDaily = pubsub
     }
     return null
   })
+
+export const updateBaseSpiritMetersDailyG2 = onSchedule(
+  {
+    schedule: '0 2 * * *',
+    timeZone: 'America/Toronto',
+  },
+  async (_event) => {
+    try {
+      await computeAndPersistBaseSpiritMeters()
+      console.log('updateBaseSpiritMetersDailyG2: updated successfully')
+    } catch (error) {
+      console.error(
+        'updateBaseSpiritMetersDailyG2 failed',
+        error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE
+      )
+    }
+    return
+  }
+)

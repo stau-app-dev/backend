@@ -1,5 +1,6 @@
 import { https } from 'firebase-functions'
 import { onRequest } from 'firebase-functions/v2/https'
+import { onSchedule } from 'firebase-functions/v2/scheduler'
 import { pubsub } from 'firebase-functions' // add this import if not already at the top
 import { admin, db } from '../admin'
 import {
@@ -510,6 +511,36 @@ export const deleteAllSongs = pubsub
     }
     return null
   })
+
+export const deleteAllSongsG2 = onSchedule(
+  {
+    schedule: '40 2 * * 0',
+    timeZone: 'America/Toronto',
+  },
+  async (_event) => {
+    try {
+      const snapshot = await db.collection(NEW_SONGS_COLLECTION).get()
+      const batch = db.batch()
+
+      snapshot.forEach((doc) => {
+        batch.delete(doc.ref)
+      })
+
+      if (!snapshot.empty) {
+        await batch.commit()
+        console.log(`deleteAllSongsG2: Deleted ${snapshot.size} songs.`)
+      } else {
+        console.log('deleteAllSongsG2: No songs to delete.')
+      }
+    } catch (error) {
+      console.error(
+        'deleteAllSongsG2 failed',
+        error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE
+      )
+    }
+    return
+  }
+)
 
 // ------------------------------
 // Deprecated getSongs
