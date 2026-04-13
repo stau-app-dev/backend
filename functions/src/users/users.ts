@@ -1,4 +1,5 @@
 import { https } from 'firebase-functions'
+import { onRequest } from 'firebase-functions/v2/https'
 import { pubsub } from 'firebase-functions'
 import { db } from '../admin'
 import {
@@ -98,6 +99,53 @@ export const getUser = https.onRequest((req, res) => {
   })
 })
 
+export const getUserG2 = onRequest((req, res) => {
+  corsHandler(req, res, async () => {
+    try {
+      const { id, email, name } = req.query
+      if (
+        typeof id !== 'string' ||
+        typeof email !== 'string' ||
+        typeof name !== 'string'
+      ) {
+        sendJson(req, res, 400, { error: 'Invalid parameters' })
+        return
+      }
+
+      let userDoc = await db.collection(NEW_USERS_COLLECTION).doc(id).get()
+
+      if (!userDoc.exists) {
+        await addUserToDatabase(id, email, name)
+        userDoc = await db.collection(NEW_USERS_COLLECTION).doc(id).get()
+        try {
+          await computeAndPersistBaseSpiritMeters()
+        } catch (e) {
+          console.warn(
+            'computeAndPersistBaseSpiritMeters failed after new user creation',
+            e
+          )
+        }
+      }
+
+      sendJson(req, res, 200, {
+        data: {
+          user: {
+            id,
+            ...userDoc.data(),
+          },
+        },
+      })
+    } catch (error) {
+      sendJson(req, res, 500, {
+        error: {
+          message:
+            error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE,
+        },
+      })
+    }
+  })
+})
+
 // ------------------------------
 // Add User to Database
 // ------------------------------
@@ -135,6 +183,52 @@ const addUserToDatabase = async (id: string, email: string, name: string) => {
 // Update User Field
 // ------------------------------
 export const updateUserField = https.onRequest((req, res) => {
+  corsHandler(req, res, async () => {
+    try {
+      const { id, field, value } = JSON.parse(req.body)
+      if (
+        typeof id !== 'string' ||
+        typeof field !== 'string' ||
+        value === undefined
+      ) {
+        sendJson(req, res, 400, { error: 'Invalid parameters' })
+        return
+      }
+
+      const userDoc = await db.collection(NEW_USERS_COLLECTION).doc(id).get()
+      if (!userDoc.exists) {
+        sendJson(req, res, 400, { error: 'Invalid parameters' })
+        return
+      }
+
+      await db
+        .collection(NEW_USERS_COLLECTION)
+        .doc(id)
+        .update({
+          [field]: value,
+        })
+
+      sendJson(req, res, 200, {
+        data: {
+          user: {
+            id,
+            ...userDoc.data(),
+            [field]: value,
+          },
+        },
+      })
+    } catch (error) {
+      sendJson(req, res, 500, {
+        error: {
+          message:
+            error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE,
+        },
+      })
+    }
+  })
+})
+
+export const updateUserFieldG2 = onRequest((req, res) => {
   corsHandler(req, res, async () => {
     try {
       const { id, field, value } = JSON.parse(req.body)
