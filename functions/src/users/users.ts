@@ -9,7 +9,7 @@ import {
   YCDSB_EMAIL,
 } from '../data/consts'
 import { User } from '../models/users'
-import * as cors from 'cors'
+import cors = require('cors')
 import { computeAndPersistBaseSpiritMeters } from '../home/spirit_meters'
 
 // ------------------------------

@@ -11,7 +11,7 @@ import {
 import { Song } from '../models/songs'
 import { User } from '../models/users'
 import { containsProfanity } from './profanity'
-import * as cors from 'cors'
+import cors = require('cors')
 
 // ------------------------------
 // Centralized CORS Handler

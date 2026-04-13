@@ -4,7 +4,7 @@ import { get } from 'request-promise'
 import { BIBLE_GATEWAY_SITE_URL, GENERIC_ERROR_MESSAGE } from '../data/consts'
 import { load } from 'cheerio'
 import { VerseOfDay } from '../models/home'
-import * as cors from 'cors'
+import cors = require('cors')
 
 // CORS config – allow prod + localhost testing
 const corsHandler = cors({

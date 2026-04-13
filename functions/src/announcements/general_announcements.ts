@@ -1,6 +1,6 @@
 import { https } from 'firebase-functions'
 import { onRequest } from 'firebase-functions/v2/https'
-import * as cors from 'cors'
+import cors = require('cors')
 import { GENERIC_ERROR_MESSAGE } from '../data/consts'
 import { GeneralAnnouncement } from '../models/announcements'
 import { db, admin } from '../admin'

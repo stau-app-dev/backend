@@ -9,7 +9,7 @@ import {
   YCDSBK12_EMAIL,
 } from '../data/consts'
 import { SpiritMeters } from '../models/home'
-import * as cors from 'cors'
+import cors = require('cors')
 
 // Reuse the same CORS config
 const corsHandler = cors({

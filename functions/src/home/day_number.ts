@@ -1,7 +1,7 @@
 import { https } from 'firebase-functions'
 import { onRequest } from 'firebase-functions/v2/https'
 import { get } from 'request-promise'
-import * as cors from 'cors'
+import cors = require('cors')
 import { GENERIC_ERROR_MESSAGE, STA_DAY_NUMBER_SITE_URL } from '../data/consts'
 import { DayNumber } from '../models/home'
 import { db } from '../admin'

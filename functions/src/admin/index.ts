@@ -1,5 +1,5 @@
 import * as admin from 'firebase-admin'
-import * as Cors from 'cors'
+import corsLib = require('cors')
 
 admin.initializeApp()
 export { admin }
@@ -14,5 +14,5 @@ export { auth }
 const storage = admin.storage()
 export { storage }
 
-const cors = Cors({ origin: true })
+const cors = corsLib({ origin: true })
 export { cors }
