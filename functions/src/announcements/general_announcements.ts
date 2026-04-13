@@ -1,4 +1,5 @@
 import { https } from 'firebase-functions'
+import { onRequest } from 'firebase-functions/v2/https'
 import * as cors from 'cors'
 import { GENERIC_ERROR_MESSAGE } from '../data/consts'
 import { GeneralAnnouncement } from '../models/announcements'
@@ -42,6 +43,113 @@ export const getGeneralAnnouncements = https.onRequest((req, res) => {
 })
 
 export const getGeneralAnnouncementsNew = https.onRequest((req, res) => {
+  corsHandler(req, res, async () => {
+    try {
+      const snapshot = await db.collection('newGeneralAnnouncements').get()
+
+      const now = admin.firestore.Timestamp.now()
+      // Build a function to compute a YYYY-MM-DD key in America/Toronto
+      const torontoFmt = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Toronto',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      })
+      const toDateKey = (
+        ts: admin.firestore.Timestamp | null
+      ): string | null => {
+        if (!ts) return null
+        const d = ts.toDate()
+        const parts = torontoFmt.formatToParts(d)
+        const year = parts.find((p) => p.type === 'year')?.value
+        const month = parts.find((p) => p.type === 'month')?.value
+        const day = parts.find((p) => p.type === 'day')?.value
+        if (!year || !month || !day) return null
+        return `${year}-${month}-${day}`
+      }
+      const todayKey = toDateKey(now)
+
+      const toTimestamp = (value: any): admin.firestore.Timestamp | null => {
+        if (!value) return null
+        // Already a Firestore Timestamp
+        if (value instanceof admin.firestore.Timestamp) return value
+        // Try Firestore-like object
+        if (
+          value &&
+          typeof value.seconds === 'number' &&
+          typeof value.nanoseconds === 'number'
+        ) {
+          return new admin.firestore.Timestamp(value.seconds, value.nanoseconds)
+        }
+        // Try parseable string or number
+        try {
+          const s = String(value).trim()
+          if (!s) return null
+          if (/^\d{13}$/.test(s)) {
+            return admin.firestore.Timestamp.fromMillis(Number(s))
+          }
+          if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(s)) {
+            const d = new Date(s.replace(' ', 'T') + 'Z')
+            return isNaN(d.getTime())
+              ? null
+              : admin.firestore.Timestamp.fromDate(d)
+          }
+          const d = new Date(s)
+          return isNaN(d.getTime())
+            ? null
+            : admin.firestore.Timestamp.fromDate(d)
+        } catch {
+          return null
+        }
+      }
+
+      const formatted: GeneralAnnouncement[] = snapshot.docs
+        .map((doc) => {
+          const data = doc.data() as any
+          const title = typeof data.title === 'string' ? data.title : ''
+          const content = typeof data.content === 'string' ? data.content : ''
+          const username =
+            typeof data.username === 'string' ? data.username : ''
+          const startTs = toTimestamp(data.startdate)
+          const endTs = toTimestamp(data.enddate)
+          return { title, content, username, startTs, endTs }
+        })
+        .filter((row) => {
+          // Domain filter: must be @ycdsb.ca
+          const domainOk = /@ycdsb\.ca$/i.test(row.username)
+          if (!domainOk) return false
+          // Date window filter by local day (America/Toronto):
+          // include if startDateKey <= todayKey <= endDateKey (inclusive).
+          if (!row.startTs || !todayKey) return false
+          const startKey = toDateKey(row.startTs)
+          const endKey = toDateKey(row.endTs)
+          if (!startKey) return false
+          const afterStart = startKey <= todayKey
+          const beforeEnd = !endKey || todayKey <= endKey
+          return afterStart && beforeEnd
+        })
+        .map((row) => ({
+          title: row.title.trim(),
+          content: row.content.trim(),
+        }))
+
+      res.set('Access-Control-Allow-Origin', req.headers.origin || '')
+      res.set('Vary', 'Origin')
+      res.json({ data: formatted })
+    } catch (error) {
+      res.set('Access-Control-Allow-Origin', req.headers.origin || '')
+      res.set('Vary', 'Origin')
+      res.status(500).json({
+        error: {
+          message:
+            error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE,
+        },
+      })
+    }
+  })
+})
+
+export const getGeneralAnnouncementsG2 = onRequest((req, res) => {
   corsHandler(req, res, async () => {
     try {
       const snapshot = await db.collection('newGeneralAnnouncements').get()
