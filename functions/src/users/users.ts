@@ -1,5 +1,6 @@
 import { https } from 'firebase-functions'
 import { onRequest } from 'firebase-functions/v2/https'
+import { onSchedule } from 'firebase-functions/v2/scheduler'
 import { pubsub } from 'firebase-functions'
 import { db } from '../admin'
 import {
@@ -308,3 +309,36 @@ export const resetUserSongStuff = pubsub
     }
     return null
   })
+
+export const resetUserSongStuffG2 = onSchedule(
+  {
+    schedule: '50 2 * * 0',
+    timeZone: 'America/Toronto',
+  },
+  async (_event) => {
+    try {
+      const snapshot = await db.collection(NEW_USERS_COLLECTION).get()
+      const batch = db.batch()
+
+      snapshot.forEach((doc) => {
+        batch.update(doc.ref, {
+          songRequestCount: 1,
+          songUpvoteCount: 3,
+        })
+      })
+
+      if (!snapshot.empty) {
+        await batch.commit()
+        console.log(`resetUserSongStuffG2: Reset ${snapshot.size} users`)
+      } else {
+        console.log('resetUserSongStuffG2: No users found')
+      }
+    } catch (error) {
+      console.error(
+        'resetUserSongStuffG2 failed',
+        error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE
+      )
+    }
+    return
+  }
+)
