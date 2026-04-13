@@ -269,6 +269,19 @@ export const getAnnouncementFormUrl = https.onRequest((req, res) => {
   })
 })
 
+export const getAnnouncementFormUrlG2 = onRequest((req, res) => {
+  corsHandler(req, res, () => {
+    const formUrl =
+      'https://docs.google.com/forms/d/e/1FAIpQLSeZ7HIVHTsd5wMjx2heWPwXd92RDmtAhY4wcaK-Gj-7cLrWXA/viewform'
+
+    res.set('Access-Control-Allow-Origin', req.headers.origin || '')
+    res.set('Vary', 'Origin')
+    res.json({
+      data: { formUrl },
+    })
+  })
+})
+
 // Upsert a general announcement into Firestore from Apps Script (GET or POST)
 // Maps: ID -> id, Timestamp -> timestamp, Username -> username,
 //       Group -> title, Announce -> content, Startdate -> startdate, Enddate -> enddate

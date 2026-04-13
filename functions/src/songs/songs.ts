@@ -1,4 +1,5 @@
 import { https } from 'firebase-functions'
+import { onRequest } from 'firebase-functions/v2/https'
 import { pubsub } from 'firebase-functions' // add this import if not already at the top
 import { admin, db } from '../admin'
 import {
@@ -52,6 +53,58 @@ function sendJson(req: any, res: any, status: number, body: any) {
 // Get Songs (New, Auth via UUID)
 // ------------------------------
 export const getSongsNew = https.onRequest((req, res) => {
+  corsHandler(req, res, async () => {
+    try {
+      let userUuid: string | undefined
+      if (req.method === 'GET') {
+        userUuid = (req.query.userUuid as string) || undefined
+      } else {
+        try {
+          const parsed = JSON.parse(req.body || '{}')
+          userUuid = parsed.userUuid
+        } catch {
+          // ignore parse errors; will fail validation below
+        }
+      }
+
+      if (!userUuid) {
+        sendJson(req, res, 400, { error: 'userUuid required' })
+        return
+      }
+
+      const userSnap = await db
+        .collection(NEW_USERS_COLLECTION)
+        .doc(userUuid)
+        .get()
+      if (!userSnap.exists) {
+        sendJson(req, res, 404, { error: 'User not found' })
+        return
+      }
+
+      const songDocs = await db
+        .collection(NEW_SONGS_COLLECTION)
+        .orderBy('upvotes', 'desc')
+        .get()
+
+      const songs: Song[] = songDocs.docs.map((doc) => {
+        const data = doc.data()
+        data.id = doc.id
+        return data as Song
+      }) as Song[]
+
+      sendJson(req, res, 200, { data: songs })
+    } catch (error) {
+      sendJson(req, res, 500, {
+        error: {
+          message:
+            error instanceof Error ? error.message : GENERIC_ERROR_MESSAGE,
+        },
+      })
+    }
+  })
+})
+
+export const getSongsG2 = onRequest((req, res) => {
   corsHandler(req, res, async () => {
     try {
       let userUuid: string | undefined
